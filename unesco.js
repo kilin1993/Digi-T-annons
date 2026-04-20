@@ -154,6 +154,7 @@ function getUnescoSiteByName(name) {
   );
 }
 
+// Hämtar användarens geolocation
 function getUserLocation() {
   return new Promise((resolve, reject) => {
     if (!navigator.geolocation) {
@@ -171,6 +172,7 @@ function getUserLocation() {
   });
 }
 
+// Haversine formeln för att räkna ut avstånd i km mellan två koordinater
 const toRadians = (value) => (value * Math.PI) / 180;
 
 function getDistanceKm(lat1, lon1, lat2, lon2) {
@@ -187,6 +189,7 @@ function getDistanceKm(lat1, lon1, lat2, lon2) {
   return 2 * R * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
 }
 
+// Hittar närmaste UNESCO plats baserat på användarens position
 function findNearestSite(position) {
   return unescoSites.reduce(
     (closest, site) => {
@@ -207,14 +210,15 @@ function findNearestSite(position) {
   );
 }
 
+// Funktion som körs när man klickar på knappen "Aktivera världsarvsinfo"
 async function activateNearbyInfo() {
   try {
     if (!unescoSites.length) {
       unescoSites = await loadUnescoSites();
     }
 
+    // Hämtar användarens position och hittar närmaste UNESCO-plats
     userPosition = await getUserLocation();
-
     const { site, distanceKm } = findNearestSite(userPosition);
 
     if (!site) {
@@ -224,6 +228,7 @@ async function activateNearbyInfo() {
     currentDistanceKm = distanceKm;
     currentSiteIndex = unescoSites.findIndex(s => s.id === site.id);
 
+    // Uppdaterar popupen med den närmaste platsen och öppnar den
     renderUnescoSite(site);
     openPopup();
     openMini();
