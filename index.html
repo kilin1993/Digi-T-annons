@@ -6,7 +6,6 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>UNESCO-annons demo</title>
   <link rel="stylesheet" href="style.css">
-
 </head>
 
 <body>
@@ -39,6 +38,7 @@
   <div class="top-actions">
     <button class="primary" onclick="openPopup()">Visa popup</button>
     <button class="secondary" onclick="openMini()">Visa sidopopup</button>
+
   </div>
 
   <div id="overlay" class="overlay" onclick="closeAll()"></div>
@@ -50,11 +50,13 @@
 
     <div class="popup-right">
       <button class="close-btn" onclick="closeAll()">×</button>
-      <div class="popup-kicker">Upptäck världsarv i närheten</div>
+      <div class="popup-kicker">Discover a UNESCO World Heritage Site</div>
       <h1 class="popup-title">Örlogsstaden Karlskrona</h1>
       <div class="popup-text">
         Få lokal världsarvsinformation direkt i din telefon när du är nära platsen.
       </div>
+
+      <button class="secondary" id="toggleDescriptionBtn" type="button">Visa mer</button>
 
       <div class="feature-list">
         <div>📍 Se världsarv nära dig</div>
@@ -81,36 +83,7 @@
     </div>
   </div>
 
-  <script>
-    const overlay = document.getElementById("overlay");
-    const popup = document.getElementById("popup");
-    const sidePopup = document.getElementById("sidePopup");
-
-    function openPopup() {
-      overlay.classList.add("show");
-      popup.classList.add("show");
-    }
-
-    function openMini() {
-      sidePopup.classList.add("show");
-    }
-
-    function closeMini() {
-      sidePopup.classList.remove("show");
-    }
-
-    function closeAll() {
-      overlay.classList.remove("show");
-      popup.classList.remove("show");
-    }
-
-    // Visa huvudpopup automatiskt efter 1.5 sekunder
-    window.addEventListener("load", () => {
-      setTimeout(() => {
-        openPopup();
-      }, 1500);
-    });
-  </script>
+  <script src="unesco.js"></script>
 </body>
 
 </html>
