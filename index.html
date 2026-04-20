@@ -1,0 +1,116 @@
+<!doctype html>
+<html lang="sv">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>UNESCO-annons demo</title>
+  <link rel="stylesheet" href="style.css">
+
+</head>
+
+<body>
+  <div class="page">
+    <div class="header">DAGSPRESSUTGIVARNA</div>
+    <div class="news-bar">JUST NU: Fastighetsägare klagar – vill inte ha 38 bostäder här</div>
+
+    <section class="hero">
+      <div>
+        <div class="headline">Fastighetsägare klagar – vill inte ha 38 bostäder här</div>
+        <p>En vanlig artikelsida där UNESCO-annonsen visas som popup ovanpå innehållet.</p>
+      </div>
+      <div class="hero-image"></div>
+    </section>
+
+    <section class="content">
+      <div class="article-card">
+        <div class="article-image"></div>
+        <h2>Örlogsstaden Karlskrona</h2>
+        <p>Här kan ni senare visa UNESCO-data, bild, beskrivning och länkar till mer information.</p>
+      </div>
+
+      <div class="sidebar">
+        <div class="sidebar-box">Senaste nytt</div>
+        <div class="sidebar-box fake-ad">Annonsyta</div>
+      </div>
+    </section>
+  </div>
+
+  <div class="top-actions">
+    <button class="primary" onclick="openPopup()">Visa popup</button>
+    <button class="secondary" onclick="openMini()">Visa sidopopup</button>
+  </div>
+
+  <div id="overlay" class="overlay" onclick="closeAll()"></div>
+
+  <div id="popup" class="popup">
+    <div class="popup-left">
+      <div class="unesco-badge">UNESCO World Heritage</div>
+    </div>
+
+    <div class="popup-right">
+      <button class="close-btn" onclick="closeAll()">×</button>
+      <div class="popup-kicker">Upptäck världsarv i närheten</div>
+      <h1 class="popup-title">Örlogsstaden Karlskrona</h1>
+      <div class="popup-text">
+        Få lokal världsarvsinformation direkt i din telefon när du är nära platsen.
+      </div>
+
+      <div class="feature-list">
+        <div>📍 Se världsarv nära dig</div>
+        <div>🌍 Få kort info på ditt språk</div>
+        <div>💬 Ställ frågor om platsen</div>
+        <div>📱 Prenumerera på SMS-notiser</div>
+      </div>
+
+      <div class="popup-actions">
+        <button class="primary" onclick="openMini()">Aktivera världsarvsinfo</button>
+        <button class="secondary" onclick="closeAll()">Nej tack, inte nu</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="sidePopup" class="side-popup">
+    <div class="mini-map">
+      <button class="x-mini" onclick="closeMini()">×</button>
+    </div>
+    <div class="side-content">
+      <div class="side-title">Du är nära ett världsarv</div>
+      <div class="side-text">Örlogsstaden Karlskrona · cirka 0,7 km bort</div>
+      <button class="primary" style="width:100%">Prenumerera på SMS</button>
+    </div>
+  </div>
+
+  <script>
+    const overlay = document.getElementById("overlay");
+    const popup = document.getElementById("popup");
+    const sidePopup = document.getElementById("sidePopup");
+
+    function openPopup() {
+      overlay.classList.add("show");
+      popup.classList.add("show");
+    }
+
+    function openMini() {
+      sidePopup.classList.add("show");
+    }
+
+    function closeMini() {
+      sidePopup.classList.remove("show");
+    }
+
+    function closeAll() {
+      overlay.classList.remove("show");
+      popup.classList.remove("show");
+    }
+
+    // Visa huvudpopup automatiskt efter 1.5 sekunder
+    window.addEventListener("load", () => {
+      setTimeout(() => {
+        openPopup();
+      }, 1500);
+    });
+  </script>
+</body>
+
+</html>
