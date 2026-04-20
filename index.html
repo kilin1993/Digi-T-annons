@@ -79,10 +79,19 @@
     <div class="side-content">
       <div class="side-title">Du är nära ett världsarv</div>
       <div class="side-text">Örlogsstaden Karlskrona · cirka 0,7 km bort</div>
-      <button class="primary" style="width:100%">Prenumerera på SMS</button>
+      <button class="primary" style="width:100%" onclick="openPayment()">Prenumerera på SMS</button>
     </div>
   </div>
 
+  <div id="paymentModal" class="payment-modal">
+    <div class="payment-box">
+      <button class="close-btn" onclick="closePayment()">×</button>
+
+      <div id="paymentContainer"></div>
+    </div>
+  </div>
+
+  <script type="module" src="./payment_sim.js"></script>
   <script src="unesco.js"></script>
 </body>
 
