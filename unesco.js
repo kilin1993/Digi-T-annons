@@ -2,6 +2,8 @@ const overlay = document.getElementById("overlay");
 const popup = document.getElementById("popup");
 const sidePopup = document.getElementById("sidePopup");
 const toggleDescriptionBtn = document.getElementById("toggleDescriptionBtn");
+const languageSelect = document.getElementById("languageSelect");
+const translateBtn = document.getElementById("translateBtn");
 
 // Lagrar all UNESCO-data som hämtas från backend
 let unescoSites = [];
@@ -14,6 +16,9 @@ let isDescriptionExpanded = false;
 
 // Sparar hela beskrivningen för aktuell plats
 let currentFullDescription = "";
+
+let originalDescription = "";
+let currentLanguage = "en";
 
 // Kommer att uppdateras av geolacation i webbläsaren
 let userPosition = null;
@@ -73,7 +78,8 @@ function renderPopup(site) {
   const title = document.querySelector(".popup-title");
   const text = document.querySelector(".popup-text");
 
-  currentFullDescription = site.description || "";
+  originalDescription = site.description || "";
+  currentFullDescription = originalDescription;
   isDescriptionExpanded = false;
 
   if (kicker) kicker.textContent = "Discover a UNESCO World Heritage Site";
@@ -169,6 +175,70 @@ function getUserLocation() {
         }),
       reject
     );
+  });
+}
+
+async function translateCurrentSite(language) {
+  const text = document.querySelector(".popup-text");
+  if (!text) return;
+
+  if (!originalDescription.trim()) {
+    text.textContent = "Ingen text finns att översätta.";
+    return;
+  }
+
+  if (language === "en") {
+    currentFullDescription = originalDescription;
+    text.textContent = isDescriptionExpanded
+      ? currentFullDescription
+      : truncateText(currentFullDescription);
+    return;
+  }
+
+  translateBtn.disabled = true;
+  translateBtn.textContent = "Översätter...";
+
+  try {
+    const response = await fetch("/api/translate", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({
+        text: originalDescription,
+        to: language
+      })
+    });
+
+    const rawText = await response.text();
+    let data = {};
+
+    if (rawText) {
+      data = JSON.parse(rawText);
+    }
+
+    if (!response.ok) {
+      text.textContent = `Fel: ${data.error || "Okänt fel"}`;
+      return;
+    }
+
+    currentFullDescription = data.translated || originalDescription;
+    text.textContent = isDescriptionExpanded
+      ? currentFullDescription
+      : truncateText(currentFullDescription);
+  } catch (error) {
+    console.error("Frontend translation error:", error);
+    text.textContent = `Fel vid översättning: ${error.message}`;
+  } finally {
+    translateBtn.disabled = false;
+    translateBtn.textContent = "Översätt";
+  }
+}
+
+if (translateBtn) {
+  translateBtn.addEventListener("click", async () => {
+    currentLanguage = languageSelect.value;
+    await translateCurrentSite(currentLanguage);
   });
 }
 
