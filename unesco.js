@@ -42,6 +42,22 @@ function closeAll() {
   popup.classList.remove("show");
 }
 
+window.openPayment = function () {
+  const modal = document.getElementById('paymentModal');
+  const container = document.getElementById('paymentContainer');
+
+  modal.classList.add('active');
+
+  // skapa komponenten dynamiskt
+  container.innerHTML = `
+    <payment-simulator mode="api"></payment-simulator>
+  `;
+};
+
+window.closePayment = function () {
+  document.getElementById('paymentModal').classList.remove('active');
+};
+
 // Hämtar UNESCO-data från din egen endpoint i server.js
 async function loadUnescoSites() {
   try {
