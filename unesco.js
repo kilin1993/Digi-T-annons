@@ -1,6 +1,7 @@
 const overlay = document.getElementById("overlay");
 const popup = document.getElementById("popup");
 const sidePopup = document.getElementById("sidePopup");
+const adCard = document.querySelector(".ad");
 const toggleDescriptionBtn = document.getElementById("toggleDescriptionBtn");
 const languageSelect = document.getElementById("languageSelect");
 const translateBtn = document.getElementById("translateBtn");
@@ -40,6 +41,12 @@ function closeMini() {
 function closeAll() {
   overlay.classList.remove("show");
   popup.classList.remove("show");
+  closeMini();
+}
+
+function openAdpopout() {
+  openPopup();
+  openMini();
 }
 
 window.openPayment = function () {
@@ -336,17 +343,15 @@ async function initUnescoComponent() {
   }
 
   renderUnescoSite(getCurrentSite());
-
-  // Bra för demo. Kan tas bort senare om annan komponent
-  // ska styra när popupen öppnas.
-  setTimeout(() => {
-    openPopup();
-  }, 1500);
 }
 
 // Kopplar "Visa mer"-knappen till expand/collapse-funktionen
 if (toggleDescriptionBtn) {
   toggleDescriptionBtn.addEventListener("click", toggleDescription);
+}
+
+if (adCard) {
+  adCard.addEventListener("click", openAdpopout);
 }
 
 window.addEventListener("load", initUnescoComponent);
