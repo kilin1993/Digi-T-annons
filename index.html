@@ -42,6 +42,7 @@
       <div class="unesco-badge">UNESCO World Heritage</div>
     </div>
 
+
     <div class="popup-right">
       <button class="close-btn" onclick="closeAll()">×</button>
       <div class="popup-kicker">Discover a UNESCO World Heritage Site</div>
@@ -54,29 +55,34 @@
       <button class="secondary" id="toggleDescriptionBtn" type="button">Visa mer</button>
 
 
-    <div class="translation-controls">
-      <label for="languageSelect">Välj språk</label>
+    <!-- Dynamisk översättning av världsarv -->
+     <div class="translation-controls">
+      <label for="languageSelect">Språk/Language </label>
       <select id="languageSelect">
-        <option value="en">English</option>
-        <option value="sv" selected>Svenska</option>
-        <option value="de">Deutsch</option>
-        <option value="es">Español</option>
-        <option value="fr">Français</option>
-        <option value="it">Italiano</option>
-        <option value="nl">Nederlands</option>
-        <option value="zh-Hans">中文 (Mandarin)</option>
-        <option value="ar">العربية</option>
-        <option value="hi">हिन्दी</option>
+        <optgroup label="Translate all">
+          <option value="sv">Svenska</option>
+          <option value="en">English</option>
+        </optgroup>
+
+        <optgroup label="Translate World Heritage">
+          <option value="de">Deutsch</option>
+          <option value="es">Español</option>
+          <option value="fr">Français</option>
+          <option value="it">Italiano</option>
+          <option value="nl">Nederlands</option>
+          <option value="zh-Hans">中文</option>
+          <option value="ar">العربية</option>
+          <option value="hi">हिन्दी</option>
+        </optgroup>
       </select>
 
-      <button class="secondary" id="translateBtn" type="button">Översätt</button>
     </div>
 
       <div class="feature-list">
-        <div>📍 Se världsarv nära dig</div>
-        <div>🌍 Få kort info på ditt språk</div>
-        <div>💬 Ställ frågor om platsen</div>
-        <div>📱 Prenumerera på SMS-notiser</div>
+        <div id="featureNearby">📍 Se världsarv nära dig</div>
+        <div id="featureLanguage">🌍 Få kort info på ditt språk</div>
+        <div id="featureQuestions">💬 Ställ frågor om platsen</div>
+        <div id="featureSms">📱 Prenumerera på SMS-notiser</div>
       </div>
 
       <div class="popup-actions">
@@ -106,6 +112,7 @@
   </div>
 
   <script type="module" src="./payment_sim.js"></script>
-<script type="module" src="unesco.js"></script></body>
+  <script type="module" src="unesco.js"></script>
+</body>
 
 </html>
