@@ -117,13 +117,6 @@ if (text) text.textContent = "Laddar svensk text...";
 // Kör översättning EFTER att UI är satt
 translateCurrentSite("sv");
 
-if (translateBtn) {
-  translateBtn.addEventListener("click", async () => {
-    currentLanguage = languageSelect.value;
-    await translateCurrentSite(currentLanguage);
-  });
-}
-
   // Visar bara knappen om texten faktiskt är lång
   if (toggleDescriptionBtn) {
     const shouldShowButton = currentFullDescription.length > 220;
