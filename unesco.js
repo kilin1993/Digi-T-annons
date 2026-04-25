@@ -19,7 +19,7 @@ let isDescriptionExpanded = false;
 let currentFullDescription = "";
 
 let originalDescription = "";
-let currentLanguage = "en";
+let currentLanguage = "sv";
 
 // Kommer att uppdateras av geolacation i webbläsaren
 let userPosition = null;
@@ -105,9 +105,22 @@ function renderPopup(site) {
   currentFullDescription = originalDescription;
   isDescriptionExpanded = false;
 
-  if (kicker) kicker.textContent = "Discover a UNESCO World Heritage Site";
-  if (title) title.textContent = site.name;
-  if (text) text.textContent = truncateText(currentFullDescription);
+  // Sätt alltid svenska som default
+  currentLanguage = "sv";
+
+if (kicker) kicker.textContent = "Upptäck ett UNESCO-världsarv";
+if (title) title.textContent = site.name;
+if (text) text.textContent = "Laddar svensk text...";
+
+// Kör översättning EFTER att UI är satt
+translateCurrentSite("sv");
+
+if (translateBtn) {
+  translateBtn.addEventListener("click", async () => {
+    currentLanguage = languageSelect.value;
+    await translateCurrentSite(currentLanguage);
+  });
+}
 
   // Visar bara knappen om texten faktiskt är lång
   if (toggleDescriptionBtn) {
@@ -210,14 +223,6 @@ async function translateCurrentSite(language) {
     return;
   }
 
-  if (language === "en") {
-    currentFullDescription = originalDescription;
-    text.textContent = isDescriptionExpanded
-      ? currentFullDescription
-      : truncateText(currentFullDescription);
-    return;
-  }
-
   translateBtn.disabled = true;
   translateBtn.textContent = "Översätter...";
 
@@ -233,12 +238,7 @@ async function translateCurrentSite(language) {
       })
     });
 
-    const rawText = await response.text();
-    let data = {};
-
-    if (rawText) {
-      data = JSON.parse(rawText);
-    }
+    const data = await response.json();
 
     if (!response.ok) {
       text.textContent = `Fel: ${data.error || "Okänt fel"}`;
@@ -246,9 +246,11 @@ async function translateCurrentSite(language) {
     }
 
     currentFullDescription = data.translated || originalDescription;
+
     text.textContent = isDescriptionExpanded
       ? currentFullDescription
       : truncateText(currentFullDescription);
+
   } catch (error) {
     console.error("Frontend translation error:", error);
     text.textContent = `Fel vid översättning: ${error.message}`;
@@ -256,13 +258,6 @@ async function translateCurrentSite(language) {
     translateBtn.disabled = false;
     translateBtn.textContent = "Översätt";
   }
-}
-
-if (translateBtn) {
-  translateBtn.addEventListener("click", async () => {
-    currentLanguage = languageSelect.value;
-    await translateCurrentSite(currentLanguage);
-  });
 }
 
 // Haversine formeln för att räkna ut avstånd i km mellan två koordinater
