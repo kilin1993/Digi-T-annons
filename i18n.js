@@ -1,0 +1,57 @@
+export const uiTexts = {
+  sv: {
+    discover: "Upptäck ett UNESCO-världsarv",
+    chooseLanguage: "Välj språk",
+    translate: "Översätt",
+    showMore: "Visa mer",
+    showLess: "Visa mindre",
+    activate: "Aktivera världsarvsinfo",
+    noThanks: "Nej tack, inte nu",
+    nearby: "Du är nära ett världsarv",
+    subscribeSms: "Prenumerera på SMS",
+    payment: "Betalning",
+    mode: "Läge",
+    card: "Kort",
+    pay: "Betala",
+    processing: "Bearbetar...",
+    loadingPlans: "Hämtar planer...",
+    paymentSuccess: "Betalningen lyckades",
+    paymentFailed: "Betalningen misslyckades",
+    featureNearby: "📍 Se världsarv nära dig",
+    featureLanguage: "🌍 Få kort info på ditt språk",
+    featureQuestions: "💬 Ställ frågor om platsen",
+    featureSms: "📱 Prenumerera på SMS-notiser",
+    showMore: "Visa mer",
+    showLess: "Visa mindre",
+  },
+
+  en: {
+    discover: "Discover a UNESCO World Heritage Site",
+    chooseLanguage: "Choose language",
+    translate: "Translate",
+    showMore: "Show more",
+    showLess: "Show less",
+    activate: "Activate World Heritage info",
+    noThanks: "No thanks, not now",
+    nearby: "You are near a World Heritage Site",
+    subscribeSms: "Subscribe to SMS",
+    payment: "Payment",
+    mode: "Mode",
+    card: "Card",
+    pay: "Pay",
+    processing: "Processing...",
+    loadingPlans: "Loading plans...",
+    paymentSuccess: "Payment successful",
+    paymentFailed: "Payment failed",
+    featureNearby: "📍 Discover World Heritage sites near you",
+    featureLanguage: "🌍 Get short info in your language",
+    featureQuestions: "💬 Ask questions about the site",
+    featureSms: "📱 Subscribe to SMS notifications",
+    showMore: "Show more",
+    showLess: "Show less",
+  }
+};
+
+export function t(key, language = "sv") {
+  return uiTexts[language]?.[key] || uiTexts.sv[key] || key;
+}

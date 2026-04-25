@@ -1,4 +1,5 @@
 import { translateText } from "./translation.js";
+import { t } from "./i18n.js";
 
 const overlay = document.getElementById("overlay");
 const popup = document.getElementById("popup");
@@ -6,7 +7,6 @@ const sidePopup = document.getElementById("sidePopup");
 const adCard = document.querySelector(".ad");
 const toggleDescriptionBtn = document.getElementById("toggleDescriptionBtn");
 const languageSelect = document.getElementById("languageSelect");
-const translateBtn = document.getElementById("translateBtn");
 
 // Lagrar all UNESCO-data som hämtas från backend
 let unescoSites = [];
@@ -20,12 +20,16 @@ let isDescriptionExpanded = false;
 // Sparar hela beskrivningen för aktuell plats
 let currentFullDescription = "";
 
+//Sparar orginalspråk och översatt språk
 let originalDescription = "";
 let currentLanguage = "sv";
 
 // Kommer att uppdateras av geolacation i webbläsaren
 let userPosition = null;
 let currentDistanceKm = null;
+
+let uiLanguage = "sv";
+
 
 function openPopup() {
   overlay.classList.add("show");
@@ -103,28 +107,35 @@ function renderPopup(site) {
   const title = document.querySelector(".popup-title");
   const text = document.querySelector(".popup-text");
 
+  // Spara original (engelska från API)
   originalDescription = site.description || "";
   currentFullDescription = originalDescription;
   isDescriptionExpanded = false;
 
-  // Sätt alltid svenska som default
+  // Startspråk
   currentLanguage = "sv";
+  uiLanguage = "sv";
 
-if (kicker) kicker.textContent = "Upptäck ett UNESCO-världsarv";
-if (title) title.textContent = site.name;
-if (text) text.textContent = "Laddar svensk text...";
+  // Se till att dropdownen visar svenska
+  if (languageSelect) {
+    languageSelect.value = "sv";
+  }
 
-// Kör översättning EFTER att UI är satt
-translateCurrentSite("sv");
+  // UI-texter
+  if (kicker) kicker.textContent = t("discover", uiLanguage);
+  if (title) title.textContent = site.name;
+  if (text) text.textContent = "Laddar svensk text...";
 
-  // Visar bara knappen om texten faktiskt är lång
+  // Visa rätt knapptext
   if (toggleDescriptionBtn) {
     const shouldShowButton = currentFullDescription.length > 220;
     toggleDescriptionBtn.style.display = shouldShowButton ? "inline-block" : "none";
-    toggleDescriptionBtn.textContent = "Visa mer";
+    toggleDescriptionBtn.textContent = t("showMore", uiLanguage);
   }
-}
 
+  // Kör EN gång, sist
+  translateCurrentSite("sv");
+}
 // Skriver in UNESCO-data i sidopopupen
 function renderSidePopup(site) {
   const title = document.querySelector(".side-title");
@@ -151,11 +162,11 @@ function toggleDescription() {
 
   if (isDescriptionExpanded) {
     text.textContent = truncateText(currentFullDescription);
-    toggleDescriptionBtn.textContent = "Visa mer";
+    toggleDescriptionBtn.textContent = t("showMore", uiLanguage);
     isDescriptionExpanded = false;
   } else {
     text.textContent = currentFullDescription;
-    toggleDescriptionBtn.textContent = "Visa mindre";
+    toggleDescriptionBtn.textContent = t("showLess", uiLanguage);
     isDescriptionExpanded = true;
   }
 }
@@ -218,8 +229,15 @@ async function translateCurrentSite(language) {
     return;
   }
 
-  translateBtn.disabled = true;
-  translateBtn.textContent = "Översätter...";
+  if (language === "en") {
+    currentFullDescription = originalDescription;
+    text.textContent = isDescriptionExpanded
+      ? currentFullDescription
+      : truncateText(currentFullDescription);
+    return;
+  }
+
+  text.textContent = "Översätter...";
 
   try {
     const translatedText = await translateText(originalDescription, language);
@@ -231,19 +249,9 @@ async function translateCurrentSite(language) {
       : truncateText(currentFullDescription);
 
   } catch (error) {
-    console.error("Frontend translation error:", error);
-    text.textContent = `Fel vid översättning: ${error.message}`;
-  } finally {
-    translateBtn.disabled = false;
-    translateBtn.textContent = "Översätt";
+    console.error("Translation error:", error);
+    text.textContent = "Fel vid översättning";
   }
-}
-
-if (translateBtn) {
-  translateBtn.addEventListener("click", async () => {
-    currentLanguage = languageSelect.value;
-    await translateCurrentSite(currentLanguage);
-  });
 }
 
 // Haversine formeln för att räkna ut avstånd i km mellan två koordinater
@@ -324,6 +332,7 @@ async function initUnescoComponent() {
   }
 
   renderUnescoSite(getCurrentSite());
+  renderUiLanguage();
 }
 
 // Kopplar "Visa mer"-knappen till expand/collapse-funktionen
@@ -336,6 +345,42 @@ if (adCard) {
 }
 
 window.addEventListener("load", initUnescoComponent);
+
+function renderUiLanguage() {
+  document.querySelector(".popup-kicker").textContent = t("discover", uiLanguage);
+  document.querySelector("label[for='languageSelect']").textContent = t("chooseLanguage", uiLanguage);
+
+  if (toggleDescriptionBtn) {
+    toggleDescriptionBtn.textContent = isDescriptionExpanded
+      ? t("showLess", uiLanguage)
+      : t("showMore", uiLanguage);
+  }
+
+  document.querySelector(".popup-actions .primary").textContent = t("activate", uiLanguage);
+  document.querySelector(".popup-actions .secondary").textContent = t("noThanks", uiLanguage);
+  document.querySelector(".side-title").textContent = t("nearby", uiLanguage);
+  document.querySelector(".side-content .primary").textContent = t("subscribeSms", uiLanguage);
+  document.getElementById("featureNearby").textContent = t("featureNearby", uiLanguage);
+  document.getElementById("featureLanguage").textContent = t("featureLanguage", uiLanguage);
+  document.getElementById("featureQuestions").textContent = t("featureQuestions", uiLanguage);
+  document.getElementById("featureSms").textContent = t("featureSms", uiLanguage);
+}
+
+if (languageSelect) {
+  languageSelect.addEventListener("change", async () => {
+    const selectedLanguage = languageSelect.value;
+    currentLanguage = selectedLanguage;
+
+    if (selectedLanguage === "en") {
+      uiLanguage = "en";
+    } else {
+      uiLanguage = "sv";
+    }
+
+    renderUiLanguage();
+    await translateCurrentSite(selectedLanguage);
+  });
+}
 
 // Gör popup-funktionerna tillgängliga från HTML
 window.openPopup = openPopup;
