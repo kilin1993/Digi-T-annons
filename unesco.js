@@ -1,3 +1,5 @@
+import { translateText } from "./translation.js";
+
 const overlay = document.getElementById("overlay");
 const popup = document.getElementById("popup");
 const sidePopup = document.getElementById("sidePopup");
@@ -227,25 +229,9 @@ async function translateCurrentSite(language) {
   translateBtn.textContent = "Översätter...";
 
   try {
-    const response = await fetch("/api/translate", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json"
-      },
-      body: JSON.stringify({
-        text: originalDescription,
-        to: language
-      })
-    });
+    const translatedText = await translateText(originalDescription, language);
 
-    const data = await response.json();
-
-    if (!response.ok) {
-      text.textContent = `Fel: ${data.error || "Okänt fel"}`;
-      return;
-    }
-
-    currentFullDescription = data.translated || originalDescription;
+    currentFullDescription = translatedText;
 
     text.textContent = isDescriptionExpanded
       ? currentFullDescription
@@ -258,6 +244,13 @@ async function translateCurrentSite(language) {
     translateBtn.disabled = false;
     translateBtn.textContent = "Översätt";
   }
+}
+
+if (translateBtn) {
+  translateBtn.addEventListener("click", async () => {
+    currentLanguage = languageSelect.value;
+    await translateCurrentSite(currentLanguage);
+  });
 }
 
 // Haversine formeln för att räkna ut avstånd i km mellan två koordinater
