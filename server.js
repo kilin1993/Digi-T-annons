@@ -83,6 +83,117 @@ app.get("/api/unesco/sites", async (req, res) => {
   }
 });
 
+function extractGeminiText(data) {
+  return (data.candidates || [])
+    .flatMap((candidate) => candidate.content?.parts || [])
+    .map((part) => part.text || "")
+    .join("\n")
+    .trim();
+}
+
+async function generateGeminiAnswer({ prompt, model }) {
+  const url = `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent`;
+  const response = await fetch(url, {
+    method: "POST",
+    headers: {
+      "x-goog-api-key": process.env.GEMINI_API_KEY,
+      "Content-Type": "application/json"
+    },
+    body: JSON.stringify({
+      contents: [
+        {
+          role: "user",
+          parts: [{ text: prompt }]
+        }
+      ],
+      generationConfig: {
+        maxOutputTokens: 220,
+        temperature: 0.4
+      }
+    })
+  });
+
+  const data = await response.json();
+
+  if (!response.ok) {
+    const error = new Error(data.error?.message || "Gemini-anropet misslyckades");
+    error.status = response.status;
+    error.data = data;
+    throw error;
+  }
+
+  return extractGeminiText(data);
+}
+
+app.post("/api/chat", async (req, res) => {
+  try {
+    const { question, site, description, distanceKm } = req.body;
+
+    if (!question || !site) {
+      return res.status(400).json({
+        error: "question and site are required"
+      });
+    }
+
+    if (!process.env.GEMINI_API_KEY) {
+      return res.status(500).json({
+        error: "GEMINI_API_KEY saknas i .env"
+      });
+    }
+
+    const siteContext = {
+      name: site.name,
+      country: site.country,
+      region: site.region,
+      description: description || site.shortDescription || site.description || "",
+      distanceKm: distanceKm ?? null
+    };
+
+    const preferredModel = process.env.GEMINI_MODEL || "gemini-2.5-flash";
+    const fallbackModels = (process.env.GEMINI_FALLBACK_MODELS || "gemini-2.5-flash-lite")
+      .split(",")
+      .map((model) => model.trim())
+      .filter(Boolean);
+    const models = [...new Set([preferredModel, ...fallbackModels])];
+    const prompt =
+      "Du är en hjälpsam svensk chatbot för en UNESCO världsarvsannons. " +
+      "Svara kort, tydligt och bara utifrån den världsarvsdata du får. " +
+      "Om frågan inte går att besvara från datan, säg det och föreslå en fråga om plats, land, region, beskrivning eller avstånd.\n\n" +
+      `Världsarvsdata:\n${JSON.stringify(siteContext, null, 2)}\n\n` +
+      `Fråga från användaren: ${question}`;
+
+    let lastError = null;
+
+    for (const model of models) {
+      try {
+        const answer = await generateGeminiAnswer({ prompt, model });
+        return res.json({
+          answer: answer || "Jag kunde inte skapa ett svar just nu.",
+          model
+        });
+      } catch (error) {
+        lastError = error;
+
+        if (error.status !== 429 && error.status !== 503) {
+          break;
+        }
+      }
+    }
+
+    const isTemporaryGeminiError =
+      lastError?.status === 429 || lastError?.status === 503;
+
+    res.status(lastError?.status || 500).json({
+      error: isTemporaryGeminiError
+        ? "Gemini är tillfälligt överbelastat. Försök igen om en stund."
+        : lastError?.message || "Gemini-anropet misslyckades."
+    });
+  } catch (error) {
+    console.error("Chat error:", error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
 // Endpoint för att returnera betalningsplanerna
 app.get('/plans', (req, res) => {
   res.json(plans);

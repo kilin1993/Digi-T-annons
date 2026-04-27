@@ -1,5 +1,6 @@
 import { translateText } from "./translation.js";
 import { t } from "./i18n.js";
+import { initChatbot } from "./chatbot.js";
 
 const overlay = document.getElementById("overlay");
 const popup = document.getElementById("popup");
@@ -29,6 +30,12 @@ let userPosition = null;
 let currentDistanceKm = null;
 
 let uiLanguage = "sv";
+
+const chatbot = initChatbot({
+  getCurrentSite,
+  getCurrentDescription: () => currentFullDescription,
+  getCurrentDistanceKm: () => currentDistanceKm
+});
 
 
 function openPopup() {
@@ -153,6 +160,7 @@ function renderUnescoSite(site) {
 
   renderPopup(site);
   renderSidePopup(site);
+  chatbot.reset(site);
 }
 
 // Växlar mellan kort och full beskrivning i popupen
