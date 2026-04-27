@@ -22,9 +22,6 @@ const plans = [
 app.use(express.static(__dirname));
 app.use(express.json());
 
-// hantering av CORS och JSON-body parsing
-app.use(express.json());
-
 // Gör om UNESCO:s rådata till ett enklare format
 function mapUnescoRecord(site) {
   return {
@@ -35,7 +32,12 @@ function mapUnescoRecord(site) {
     country: site.states_names?.join(", ") || "Unknown",
     region: site.region || "Unknown",
     latitude: site.coordinates?.lat || null,
-    longitude: site.coordinates?.lon || null
+    longitude: site.coordinates?.lon || null,
+    imageUrl: site.main_image_url || null,
+    imageCaption: site.main_image_caption_en || "",
+    unescoUrl: site.id_no
+    ? `https://whc.unesco.org/en/list/${site.id_no}/`
+    : "https://whc.unesco.org"
   };
 }
 

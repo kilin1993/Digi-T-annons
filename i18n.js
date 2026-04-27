@@ -23,6 +23,11 @@ export const uiTexts = {
     featureSms: "📱 Prenumerera på SMS-notiser",
     showMore: "Visa mer",
     showLess: "Visa mindre",
+    readMoreUnesco: "Läs mer hos UNESCO ↗",
+    nearbyHeading: "Fler världsarv i närheten 📍",
+    loadingNearest: "Läser in närmaste världsarv...",
+    loadingNearby: "Läser in världsarv i närheten...",
+    nearbyError: "Kunde inte hämta närliggande världsarv.",
   },
 
   en: {
@@ -49,6 +54,11 @@ export const uiTexts = {
     featureSms: "📱 Subscribe to SMS notifications",
     showMore: "Show more",
     showLess: "Show less",
+    readMoreUnesco: "Read more at UNESCO ↗",
+    nearbyHeading: "More World Heritage sites nearby 📍",
+    loadingNearest: "Loading nearest World Heritage site...",
+    loadingNearby: "Loading nearby World Heritage sites...",
+    nearbyError: "Could not load nearby World Heritage sites.",
   }
 };
 

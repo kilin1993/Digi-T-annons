@@ -47,36 +47,40 @@
       <button class="close-btn" onclick="closeAll()">×</button>
       <div class="popup-kicker">Discover a UNESCO World Heritage Site</div>
       <h1 class="popup-title">Örlogsstaden Karlskrona</h1>
+
+      <div class="popup-status" id="popupStatus" style="display:none;"></div>
+
       <div class="popup-text">
         Få lokal världsarvsinformation direkt i din telefon när du är nära platsen.
       </div>
 
-
       <button class="secondary" id="toggleDescriptionBtn" type="button">Visa mer</button>
 
+      <a id="unescoLink" class="unesco-link" href="#" target="_blank" rel="noopener"></a>
 
-    <!-- Dynamisk översättning av världsarv -->
-     <div class="translation-controls">
-      <label for="languageSelect">Språk/Language </label>
-      <select id="languageSelect">
-        <optgroup label="Translate all">
-          <option value="sv">Svenska</option>
-          <option value="en">English</option>
-        </optgroup>
 
-        <optgroup label="Translate World Heritage">
-          <option value="de">Deutsch</option>
-          <option value="es">Español</option>
-          <option value="fr">Français</option>
-          <option value="it">Italiano</option>
-          <option value="nl">Nederlands</option>
-          <option value="zh-Hans">中文</option>
-          <option value="ar">العربية</option>
-          <option value="hi">हिन्दी</option>
-        </optgroup>
-      </select>
+      <!-- Dynamisk översättning av världsarv -->
+      <div class="translation-controls">
+        <label for="languageSelect">Språk/Language </label>
+        <select id="languageSelect">
+          <optgroup label="Translate all">
+            <option value="sv">Svenska</option>
+            <option value="en">English</option>
+          </optgroup>
 
-    </div>
+          <optgroup label="Translate World Heritage">
+            <option value="de">Deutsch</option>
+            <option value="es">Español</option>
+            <option value="fr">Français</option>
+            <option value="it">Italiano</option>
+            <option value="nl">Nederlands</option>
+            <option value="zh-Hans">中文</option>
+            <option value="ar">العربية</option>
+            <option value="hi">हिन्दी</option>
+          </optgroup>
+        </select>
+
+      </div>
 
       <div class="feature-list">
         <div id="featureNearby">📍 Se världsarv nära dig</div>
@@ -99,6 +103,9 @@
     <div class="side-content">
       <div class="side-title">Du är nära ett världsarv</div>
       <div class="side-text">Örlogsstaden Karlskrona · cirka 0,7 km bort</div>
+      <div id="sideStatus" class="side-status" style="display:none;"></div>
+      <div id="nearbyHeading" class="nearby-heading">Fler världsarv i närheten 📍</div>
+      <div id="nearbySitesList" class="nearby-sites-list"></div>
       <button class="primary" style="width:100%" onclick="openPayment()">Prenumerera på SMS</button>
     </div>
   </div>

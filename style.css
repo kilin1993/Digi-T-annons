@@ -90,6 +90,12 @@ body {
     padding: 16px;
 }
 
+.side-status {
+  font-size: 0.8rem;
+  color: #666;
+  margin: 8px 0;
+}
+
 .ad {
     background:
         linear-gradient(rgba(0, 0, 0, 0.32), rgba(0, 0, 0, 0.32)),
@@ -156,6 +162,22 @@ button {
     box-shadow: 0 20px 80px rgba(0, 0, 0, 0.35);
     display: none;
     z-index: 1100;
+}
+
+.popup-status {
+    margin: 8px 0 14px;
+    font-size: 16px;
+    color: #555;
+}
+
+.popup-status.loading {
+    color: #0b63ce;
+    font-weight: 600;
+}
+
+.popup-status.error {
+    color: #b42318;
+    font-weight: 600;
 }
 
 .popup.show {
@@ -280,6 +302,38 @@ button {
     margin-bottom: 14px;
 }
 
+.nearby-heading {
+  margin-top: 10px;
+  font-size: 0.8rem;
+  color: #777;
+  font-weight: 600;
+}
+
+.nearby-sites-list {
+  margin-top: 10px;
+  font-size: 0.85rem;
+  color: #555;
+   margin-bottom: 12px;
+}
+
+.nearby-site-item {
+  display: block;
+  width: 100%;
+  padding: 8px 0;
+  border: none;
+  border-top: 1px solid #eee;
+  background: transparent;
+  text-align: left;
+  font-size: 0.85rem;
+  color: #555;
+  cursor: pointer;
+}
+
+.nearby-site-item:hover {
+  color: #0b63ce;
+  text-decoration: underline;
+}
+
 .x-mini {
     position: absolute;
     top: 10px;
@@ -367,4 +421,17 @@ button {
 label[for="languageSelect"] {
     margin-top: 16px;
     display: block;
+}
+
+.unesco-link {
+  display: block;
+  margin: 10px 0;
+  font-size: 0.85rem;
+  color: #0b63ce;
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.unesco-link:hover {
+  text-decoration: underline;
 }

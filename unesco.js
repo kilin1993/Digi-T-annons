@@ -7,6 +7,7 @@ const sidePopup = document.getElementById("sidePopup");
 const adCard = document.querySelector(".ad");
 const toggleDescriptionBtn = document.getElementById("toggleDescriptionBtn");
 const languageSelect = document.getElementById("languageSelect");
+const popupStatus = document.getElementById("popupStatus");
 
 // Lagrar all UNESCO-data som hämtas från backend
 let unescoSites = [];
@@ -55,6 +56,38 @@ function openAdpopout() {
   openMini();
 }
 
+function setPopupStatus(message, type = "loading") {
+  if (!popupStatus) return;
+
+  popupStatus.textContent = message;
+  popupStatus.style.display = "block";
+  popupStatus.className = `popup-status ${type}`;
+}
+
+function setSideStatus(key) {
+  const el = document.getElementById("sideStatus");
+  if (!el) return;
+
+  el.textContent = t(key, uiLanguage);
+  el.style.display = "block";
+}
+
+function clearSideStatus() {
+  const el = document.getElementById("sideStatus");
+  if (!el) return;
+
+  el.textContent = "";
+  el.style.display = "none";
+}
+
+function clearPopupStatus() {
+  if (!popupStatus) return;
+
+  popupStatus.textContent = "";
+  popupStatus.style.display = "none";
+  popupStatus.className = "popup-status";
+}
+
 window.openPayment = function () {
   const modal = document.getElementById('paymentModal');
   const container = document.getElementById('paymentContainer');
@@ -101,11 +134,39 @@ function truncateText(text, maxLength = 220) {
   return text.slice(0, maxLength).trim() + "...";
 }
 
+function renderNearbySitesList(nearbySites) {
+  const list = document.getElementById("nearbySitesList");
+  if (!list) return;
+
+  list.innerHTML = nearbySites
+    .slice(1)
+    .map(({ site, distanceKm }) => `
+      <button class="nearby-site-item" data-site-id="${site.id}">
+        ${site.name} · ${distanceKm.toFixed(1)} km ↗
+      </button>
+    `)
+    .join("");
+
+  list.querySelectorAll(".nearby-site-item").forEach(button => {
+    button.addEventListener("click", () => {
+      const siteId = button.dataset.siteId;
+      const selected = unescoSites.find(site => String(site.id) === String(siteId));
+
+      if (!selected) return;
+
+      currentSiteIndex = unescoSites.findIndex(site => String(site.id) === String(siteId));
+      renderUnescoSite(selected);
+    });
+  });
+}
+
 // Skriver in UNESCO-data i huvudpopupen
 function renderPopup(site) {
   const kicker = document.querySelector(".popup-kicker");
   const title = document.querySelector(".popup-title");
   const text = document.querySelector(".popup-text");
+  const image = document.querySelector(".popup-left");
+  const unescoLink = document.getElementById("unescoLink");
 
   // Spara original (engelska från API)
   originalDescription = site.description || "";
@@ -121,6 +182,26 @@ function renderPopup(site) {
     languageSelect.value = "sv";
   }
 
+  if (unescoLink) {
+    unescoLink.href = site.unescoUrl || "https://whc.unesco.org";
+  }
+
+  // Bildlogik med fallback
+  const fallbackImage = "https://images.unsplash.com/photo-1616428090830-59bd09d9f272?w=1200&auto=format&fit=crop";
+
+  let imageUrl = fallbackImage;
+
+  if (site.imageUrl && /\.(jpg|jpeg|png|webp)$/i.test(site.imageUrl)) {
+    imageUrl = site.imageUrl;
+  }
+
+  if (image) {
+    image.style.background = `
+    linear-gradient(rgba(0,0,0,0.2), rgba(0,0,0,0.4)),
+    url("${imageUrl}") center/cover no-repeat
+  `;
+  }
+
   // UI-texter
   if (kicker) kicker.textContent = t("discover", uiLanguage);
   if (title) title.textContent = site.name;
@@ -133,16 +214,35 @@ function renderPopup(site) {
     toggleDescriptionBtn.textContent = t("showMore", uiLanguage);
   }
 
-  // Kör EN gång, sist
+  // Översätt aktuell text till svenska
   translateCurrentSite("sv");
 }
+
 // Skriver in UNESCO-data i sidopopupen
 function renderSidePopup(site) {
   const title = document.querySelector(".side-title");
   const text = document.querySelector(".side-text");
+  const miniMap = document.querySelector(".mini-map");
 
   if (title) title.textContent = site.name;
   if (text) text.textContent = `${site.country} · ${site.region}`;
+
+  // 👇 BILDLOGIK
+  const fallbackImage =
+    "https://images.unsplash.com/photo-1616428090830-59bd09d9f272?w=1200&auto=format&fit=crop";
+
+  let imageUrl = fallbackImage;
+
+  if (site.imageUrl && /\.(jpg|jpeg|png|webp)$/i.test(site.imageUrl)) {
+    imageUrl = site.imageUrl;
+  }
+
+  if (miniMap) {
+    miniMap.style.background = `
+      linear-gradient(rgba(0,0,0,0.2), rgba(0,0,0,0.4)),
+      url("${imageUrl}") center/cover no-repeat
+    `;
+  }
 }
 
 // Renderar UNESCO-modulen
@@ -265,43 +365,42 @@ function getDistanceKm(lat1, lon1, lat2, lon2) {
   const a =
     Math.sin(dLat / 2) ** 2 +
     Math.cos(toRadians(lat1)) *
-      Math.cos(toRadians(lat2)) *
-      Math.sin(dLon / 2) ** 2;
+    Math.cos(toRadians(lat2)) *
+    Math.sin(dLon / 2) ** 2;
 
   return 2 * R * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
 }
 
-// Hittar närmaste UNESCO plats baserat på användarens position
-function findNearestSite(position) {
-  return unescoSites.reduce(
-    (closest, site) => {
-      if (site.latitude == null || site.longitude == null) return closest;
-
-      const distanceKm = getDistanceKm(
+function findNearestSites(position, limit = 3) {
+  return unescoSites
+    .filter(site => site.latitude != null && site.longitude != null)
+    .map(site => ({
+      site,
+      distanceKm: getDistanceKm(
         position.latitude,
         position.longitude,
         Number(site.latitude),
         Number(site.longitude)
-      );
-
-      return distanceKm < closest.distanceKm
-        ? { site, distanceKm }
-        : closest;
-    },
-    { site: null, distanceKm: Infinity }
-  );
+      )
+    }))
+    .sort((a, b) => a.distanceKm - b.distanceKm)
+    .slice(0, limit);
 }
 
 // Funktion som körs när man klickar på knappen "Aktivera världsarvsinfo"
 async function activateNearbyInfo() {
   try {
+    setPopupStatus(t("loadingNearest", uiLanguage), "loading");
+    setSideStatus("loadingNearby");
+
     if (!unescoSites.length) {
       unescoSites = await loadUnescoSites();
     }
 
     // Hämtar användarens position och hittar närmaste UNESCO-plats
     userPosition = await getUserLocation();
-    const { site, distanceKm } = findNearestSite(userPosition);
+    const nearbySites = findNearestSites(userPosition, 5);
+    const { site, distanceKm } = nearbySites[0];
 
     if (!site) {
       return alert("Kunde inte hitta någon UNESCO-plats med koordinater.");
@@ -311,11 +410,16 @@ async function activateNearbyInfo() {
     currentSiteIndex = unescoSites.findIndex(s => s.id === site.id);
 
     // Uppdaterar popupen med den närmaste platsen och öppnar den
+    clearPopupStatus();
+    clearSideStatus();
     renderUnescoSite(site);
+    renderNearbySitesList(nearbySites);
     openPopup();
     openMini();
   } catch (error) {
     console.error("Kunde inte hämta användarens plats:", error);
+    setPopupStatus("Kunde inte hämta din plats.", "error");
+    setSideStatus("nearbyError");
     alert("Du behöver godkänna platsåtkomst för att använda funktionen.");
   }
 }
@@ -324,15 +428,24 @@ async function activateNearbyInfo() {
 // 1. hämtar data
 // 2. visar första UNESCO-posten
 async function initUnescoComponent() {
+  setPopupStatus("Läser in världsarv...", "loading");
+
   unescoSites = await loadUnescoSites();
 
   if (!unescoSites.length) {
+    setPopupStatus("Kunde inte ladda UNESCO-data.", "error");
     console.warn("No UNESCO sites found.");
     return;
   }
 
+  clearPopupStatus();
+
   renderUnescoSite(getCurrentSite());
   renderUiLanguage();
+
+  setTimeout(() => {
+    openPopup();
+  }, 1500);
 }
 
 // Kopplar "Visa mer"-knappen till expand/collapse-funktionen
@@ -356,6 +469,8 @@ function renderUiLanguage() {
       : t("showMore", uiLanguage);
   }
 
+  document.getElementById("unescoLink").textContent = t("readMoreUnesco", uiLanguage);
+  document.getElementById("nearbyHeading").textContent = t("nearbyHeading", uiLanguage);
   document.querySelector(".popup-actions .primary").textContent = t("activate", uiLanguage);
   document.querySelector(".popup-actions .secondary").textContent = t("noThanks", uiLanguage);
   document.querySelector(".side-title").textContent = t("nearby", uiLanguage);
