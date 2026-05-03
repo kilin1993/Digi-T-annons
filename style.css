@@ -485,3 +485,7 @@ label[for="languageSelect"] {
     margin-top: 16px;
     display: block;
 }
+
+.payment-box {
+  position: relative; /* 👈 lägg till denna */
+}
