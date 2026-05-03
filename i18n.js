@@ -5,7 +5,7 @@ export const uiTexts = {
     translate: "Översätt",
     showMore: "Visa mer",
     showLess: "Visa mindre",
-    activate: "Aktivera världsarvsinfo",
+    activate: "Prenumerera",
     noThanks: "Nej tack, inte nu",
     nearby: "Du är nära ett världsarv",
     subscribeSms: "Prenumerera på SMS",
@@ -23,6 +23,7 @@ export const uiTexts = {
     featureSms: "📱 Prenumerera på SMS-notiser",
     showMore: "Visa mer",
     showLess: "Visa mindre",
+    unescoLink: "Läs mer hos UNESCO →",
   },
 
   en: {
@@ -31,7 +32,7 @@ export const uiTexts = {
     translate: "Translate",
     showMore: "Show more",
     showLess: "Show less",
-    activate: "Activate World Heritage info",
+    activate: "Subscribe",
     noThanks: "No thanks, not now",
     nearby: "You are near a World Heritage Site",
     subscribeSms: "Subscribe to SMS",
@@ -49,6 +50,7 @@ export const uiTexts = {
     featureSms: "📱 Subscribe to SMS notifications",
     showMore: "Show more",
     showLess: "Show less",
+    unescoLink: "Read more at UNESCO →",
   }
 };
 

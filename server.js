@@ -27,15 +27,18 @@ app.use(express.json());
 
 // Gör om UNESCO:s rådata till ett enklare format
 function mapUnescoRecord(site) {
+  const id = site.id_no || null;
+
   return {
-    id: site.id_no || null,
+    id,
     name: site.name_en || "Unknown",
     shortDescription: site.short_description_en || "",
     description: site.description_en || "",
     country: site.states_names?.join(", ") || "Unknown",
     region: site.region || "Unknown",
     latitude: site.coordinates?.lat || null,
-    longitude: site.coordinates?.lon || null
+    longitude: site.coordinates?.lon || null,
+    url: id ? `https://whc.unesco.org/en/list/${id}` : ""
   };
 }
 
