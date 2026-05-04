@@ -53,19 +53,35 @@ function openAdpopout() {
 }
 
 window.openPayment = function () {
-  const modal = document.getElementById('paymentModal');
-  const container = document.getElementById('paymentContainer');
+  const container = document.getElementById("paymentContainer");
+  if (!container) return;
 
-  modal.classList.add('active');
+  container.classList.remove("hidden");
 
-  // skapa komponenten dynamiskt
   container.innerHTML = `
     <payment-simulator mode="api"></payment-simulator>
   `;
 };
 
 window.closePayment = function () {
-  document.getElementById('paymentModal').classList.remove('active');
+  const container = document.getElementById("paymentContainer");
+  if (!container) return;
+
+  container.classList.add("hidden");
+  container.innerHTML = "";
+};
+
+window.handleDecline = function () {
+  const container = document.getElementById("paymentContainer");
+
+  // Om betalningen är synlig → stäng den
+  if (container && !container.classList.contains("hidden")) {
+    closePayment();
+    return;
+  }
+
+  // annars stäng hela popupen
+  closeAll();
 };
 
 // Hämtar UNESCO-data från din egen endpoint i server.js
