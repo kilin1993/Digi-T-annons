@@ -202,7 +202,7 @@ app.get('/plans', (req, res) => {
   res.json(plans);
 });
 
-app.post('payments', (req, res) => {
+app.post('/payments', (req, res) => {
   try {
     const body = req.body;
     console.log('BODY:', body);
