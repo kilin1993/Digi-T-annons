@@ -69,6 +69,28 @@ const style = `
 .success {
   color: green;
 }
+
+.select {
+  width: 100%;
+  height: 42px;
+  padding: 0 10px;
+  margin-bottom: 14px;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  background: #fff;
+  font-size: 0.95rem;
+  cursor: pointer;
+}
+
+.select:focus {
+  outline: none;
+  border-color: #111;
+}
+
+.select:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
 `;
 
 // Payment Simulator Web Component
@@ -83,8 +105,8 @@ class PaymentSimulator extends HTMLElement {
 
     // ger planer för demo-läge
     this.plans = [
-      { id: 'onetime', name: 'Engång', amount: 49, currency: 'SEK' },
-      { id: 'subscription', name: 'Månad', amount: 39, currency: 'SEK' }
+      { id: 'onetime', name: 'Månatlig', amount: 49, currency: 'SEK' },
+      { id: 'subscription', name: 'Årlig', amount: 549, currency: 'SEK' }
     ];
 
     // standardval för plan och betalningsmetod
@@ -362,7 +384,7 @@ class PaymentSimulator extends HTMLElement {
 
         <div class="row">Läge: ${this.mode}</div>
 
-        <select id="plan" ${this.status === 'loading' ? 'disabled' : ''}>
+        <select id="plan" class="select" ${this.status === 'loading' ? 'disabled' : ''}>
           ${options}
         </select>
 
