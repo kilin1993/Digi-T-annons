@@ -14,8 +14,8 @@ const __dirname = path.dirname(__filename);
 
 //planer för betalningsidan
 const plans = [
-  { id: "onetime", name: "Engång", amount: 49, currency: "SEK" },
-  { id: "subscription", name: "Månad", amount: 39, currency: "SEK" }
+  { id: "onetime", name: "Månatlig", amount: 49, currency: "SEK" },
+  { id: "subscription", name: "Årlig", amount: 549, currency: "SEK" }
 ];
 
 // Serverar filer direkt från projektets rotmapp
