@@ -19,12 +19,49 @@ const plans = [
   { id: "subscription", name: "Årlig", amount: 549, currency: "SEK" }
 ];
 
+// Klarna Playground-konfiguration
+const KLARNA_BASE_URL = process.env.KLARNA_BASE_URL || 'https://api.playground.klarna.com';
+const KLARNA_USERNAME = process.env.KLARNA_USERNAME || '';
+const KLARNA_PASSWORD = process.env.KLARNA_PASSWORD || '';
+
 // Serverar filer direkt från projektets rotmapp
 app.use(express.static(__dirname));
 app.use(express.json());
 
 // hantering av CORS och JSON-body parsing
 app.use(express.json());
+
+async function klarnaApiRequest(endpoint, method = 'POST', body = null) {
+  const url = `${KLARNA_BASE_URL}${endpoint}`;
+  const auth = Buffer.from(`${KLARNA_USERNAME}:${KLARNA_PASSWORD}`).toString('base64');
+  const options = {
+    method,
+    headers: {
+      Authorization: `Basic ${auth}`,
+      'Content-Type': 'application/json'
+    }
+  };
+
+  if (body) {
+    options.body = JSON.stringify(body);
+  }
+
+  const response = await fetch(url, options);
+  const data = await response.json().catch(() => ({}));
+
+  if (!response.ok) {
+    const err = new Error(`Klarna API error ${response.status}`);
+    err.data = data;
+    throw err;
+  }
+
+  return data;
+}
+
+function getKlarnaMerchantUrl(req, path) {
+  const baseUrl = process.env.KLARNA_MERCHANT_URL_BASE || `https://${req.get('host')}`;
+  return `${baseUrl.replace(/\/$/, '')}${path}`;
+}
 
 // Gör om UNESCO:s rådata till ett enklare format
 function mapUnescoRecord(site) {
@@ -198,11 +235,110 @@ app.post("/api/chat", async (req, res) => {
   }
 });
 
-// Endpoint för att returnera betalningsplanerna
+// Returnerar betalningsplanerna
 app.get('/plans', (req, res) => {
   res.json(plans);
 });
 
+// Skapa klarna session och returnera session id och client token
+app.post('/klarna/sessions', async (req, res) => {
+  try {
+    const { planId, customer } = req.body;
+    const selectedPlan = plans.find((p) => p.id === planId);
+
+    if (!selectedPlan) {
+      return res.status(400).json({ status: 'failed', message: 'Ogiltig plan' });
+    }
+
+    const sessionData = {
+      acquiring_channel: 'ECOMMERCE',
+      intent: 'buy',
+      purchase_country: 'SE',
+      purchase_currency: 'SEK',
+      locale: 'sv-SE',
+      order_amount: selectedPlan.amount * 100,
+      order_tax_amount: Math.round(selectedPlan.amount * 100 * 0.25),
+      order_lines: [
+        {
+          type: 'physical',
+          reference: selectedPlan.id,
+          name: selectedPlan.name,
+          quantity: 1,
+          unit_price: selectedPlan.amount * 100,
+          tax_rate: 2500,
+          total_amount: selectedPlan.amount * 100,
+          total_tax_amount: Math.round(selectedPlan.amount * 100 * 0.25)
+        }
+      ],
+      merchant_urls: {
+        confirmation: getKlarnaMerchantUrl(req, '/confirmation'),
+        notification: getKlarnaMerchantUrl(req, '/notification')
+      }
+    };
+
+    const klarnaSession = await klarnaApiRequest('/payments/v1/sessions', 'POST', sessionData);
+
+    res.json({
+      status: 'success',
+      session_id: klarnaSession.session_id,
+      client_token: klarnaSession.client_token,
+      payment_method_categories: klarnaSession.payment_method_categories
+    });
+  } catch (error) {
+    console.error('Klarna session creation error:', error);
+    res.status(500).json({ status: 'failed', message: 'Kunde inte skapa Klarna-session' });
+  }
+});
+
+// Skapa Klarna order baserat på session och returnera order id och url
+app.post('/klarna/orders', async (req, res) => {
+  try {
+    const { authorization_token, planId } = req.body;
+    const selectedPlan = plans.find((p) => p.id === planId);
+
+    if (!selectedPlan) {
+      return res.status(400).json({ status: 'failed', message: 'Ogiltig plan' });
+    }
+
+    const orderData = {
+      purchase_country: 'SE',
+      purchase_currency: 'SEK',
+      locale: 'sv-SE',
+      order_amount: selectedPlan.amount * 100,
+      order_tax_amount: Math.round(selectedPlan.amount * 100 * 0.25),
+      order_lines: [
+        {
+          type: 'physical',
+          reference: selectedPlan.id,
+          name: selectedPlan.name,
+          quantity: 1,
+          unit_price: selectedPlan.amount * 100,
+          tax_rate: 2500,
+          total_amount: selectedPlan.amount * 100,
+          total_tax_amount: Math.round(selectedPlan.amount * 100 * 0.25)
+        }
+      ],
+      merchant_reference1: `order_${Date.now()}`
+    };
+
+    const klarnaOrder = await klarnaApiRequest(
+      `/payments/v1/authorizations/${authorization_token}/order`,
+      'POST',
+      orderData
+    );
+
+    res.json({
+      status: 'success',
+      order_id: klarnaOrder.order_id,
+      redirect_url: klarnaOrder.redirect_url
+    });
+  } catch (error) {
+    console.error('Klarna order creation error:', error);
+    res.status(500).json({ status: 'failed', message: 'Kunde inte skapa Klarna-order' });
+  }
+});
+
+// Endpoint för att hantera betalningar
 app.post('/payments', (req, res) => {
   try {
     const body = req.body;
@@ -246,7 +382,7 @@ app.post('/payments', (req, res) => {
       }
     }
 
-    const success = Math.random() < 0.4;
+    const success = paymentMethod === 'card' ? true : Math.random() < 0.4;
     const now = Date.now();
 
     if (!success) {

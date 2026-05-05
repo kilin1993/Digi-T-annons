@@ -124,6 +124,9 @@ class PaymentSimulator extends HTMLElement {
       expiry: '',
       cvc: ''
     };
+
+    this.klarnaSession = null;
+    this.klarnaReady = false;
   }
   // När elementet läggs till i DOM:en, ladda planer och rendera
   connectedCallback() {
@@ -257,27 +260,218 @@ class PaymentSimulator extends HTMLElement {
 
   // Funktion för att hantera betalning
   async pay() {
-  // Validera formuläret innan betalning
-  const error = this.validate();
-  // Om det finns ett valideringsfel, sätt status till "failed" och visa felmeddelandet
-  if (error) {
-    this.status = 'failed';
-    this.message = error;
+    const error = this.validate();
+    if (error) {
+      this.status = 'failed';
+      this.message = error;
+      this.render();
+      this.bind();
+      return;
+    }
+
+    // Status medan betalningen hanteras
+    this.status = 'processing';
+    this.message = this.method === 'klarna' ? 'Förbereder Klarna...' : 'Bearbetar...';
     this.render();
     this.bind();
-    return;
-  }
-  // Sätt status till "processing" och visa ett meddelande om att betalningen behandlas
-  this.status = 'processing';
-  this.message = 'Bearbetar...';
-  this.render();
-  this.bind();
 
-  // Simulera en kort fördröjning innan betalningen behandlas
-  try {
+    try {
+      if (this.method === 'klarna') {
+        if (this.mode === 'api') {
+          if (!this.klarnaSession) {
+            await this.handleKlarnaPayment();
+          } else if (this.klarnaReady) {
+            await this.authorizeKlarnaPayment();
+          } else {
+            this.status = 'idle';
+            this.message = 'Klarna laddas, klicka igen när det är klart.';
+            this.render();
+            this.bind();
+            return;
+          }
+        } else {
+          await this.handleKlarnaPayment();
+        }
+      } else {
+        await this.handleCardPayment();
+      }
+    } catch (error) {
+      console.error('Frontendfel i pay():', error);
+      this.status = 'failed';
+      this.message = error.message || 'Något gick fel';
+      this.render();
+      this.bind();
+      return;
+    }
+
+    this.render();
+    this.bind();
+  }
+
+    // Funktion för att hantera Klarna betalning
+  async handleKlarnaPayment() {
+    try {
+      const response = await fetch(`${this.baseUrl}/klarna/sessions`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          planId: this.selectedPlan,
+          customer: {
+            email: this.form.email,
+            phone: this.form.phone
+          }
+        })
+      });
+
+      const data = await response.json();
+      if (!response.ok || data.status !== 'success') {
+        throw new Error(data.message || 'Kunde inte skapa Klarna-session');
+      }
+
+      this.klarnaSession = data;
+      this.klarnaReady = false;
+      this.status = 'idle';
+      this.message = 'Laddar Klarna...';
+      this.render();
+      this.bind();
+
+      await this.loadKlarna();
+      await this.initKlarnaPayments();
+
+      this.status = 'success';
+      this.message = 'Klarna är redo. Klicka knappen igen för att slutföra betalningen.';
+      this.klarnaReady = true;
+      this.render();
+      this.bind();
+    } catch (error) {
+      throw error;
+    }
+  }
+
+    // Funktion för att ladda Klarna SDK
+  async loadKlarna() {
+    if (window.Klarna) return;
+
+    return new Promise((resolve, reject) => {
+      const script = document.createElement('script');
+      script.src = 'https://x.klarnacdn.net/kp/lib/v1/api.js';
+      script.async = true;
+      script.onload = resolve;
+      script.onerror = () => reject(new Error('Kunde inte ladda Klarna SDK'));
+      document.head.appendChild(script);
+    });
+  }
+
+  // Funktion för att starta Klarna Payments
+  async initKlarnaPayments() {
+    return new Promise((resolve, reject) => {
+      if (!window.Klarna || !window.Klarna.Payments) {
+        return reject(new Error('Klarna är inte tillgänglig'));
+      }
+
+      window.Klarna.Payments.init({
+        client_token: this.klarnaSession.client_token
+      });
+
+      const container = this.shadowRoot.querySelector('#klarna-container');
+      if (!container) {
+        return reject(new Error('Klarna-container saknas i DOM'));
+      }
+
+      window.Klarna.Payments.load(
+        {
+          container
+        },
+        {},
+        (res) => {
+          if (res && res.show_form) {
+            resolve();
+          } else {
+            reject(new Error('Klarna är inte tillgängligt för denna order'));
+          }
+        }
+      );
+    });
+  }
+
+  // Funktion för att auktorisera Klarna betalning
+  async authorizeKlarnaPayment() {
+    if (!window.Klarna || !window.Klarna.Payments) {
+      throw new Error('Klarna är inte tillgängligt');
+    }
+
+    this.status = 'processing';
+    this.message = 'Auktoriserar Klarna betalning...';
+    this.render();
+
+    return new Promise((resolve, reject) => {
+      window.Klarna.Payments.authorize(
+        {},
+        {
+          billing_address: {
+            email: this.form.email,
+            phone: this.form.phone,
+            country: 'SE',
+            given_name: 'Test',
+            family_name: 'Kund',
+            street_address: 'Demo gatan 1',
+            postal_code: '11122',
+            city: 'Stockholm'
+          }
+        },
+        async (res) => {
+          if (res && res.approved && res.authorization_token) {
+            try {
+              const orderResponse = await fetch(`${this.baseUrl}/klarna/orders`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                  authorization_token: res.authorization_token,
+                  planId: this.selectedPlan
+                })
+              });
+
+              const orderData = await orderResponse.json();
+              if (!orderResponse.ok || orderData.status !== 'success') {
+                throw new Error(orderData.message || 'Kunde inte skapa order');
+              }
+
+              this.status = 'success';
+              this.message = 'Betalningen är godkänd!';
+              this.dispatchEvent(new CustomEvent('payment-success', {
+                detail: {
+                  order_id: orderData.order_id,
+                  method: 'klarna'
+                },
+                bubbles: true,
+                composed: true
+              }));
+              this.render();
+              this.bind();
+              resolve();
+            } catch (error) {
+              this.status = 'failed';
+              this.message = error.message || 'Kunde inte skapa order';
+              this.render();
+              this.bind();
+              reject(error);
+            }
+          } else {
+            this.status = 'failed';
+            this.message = (res && res.error && res.error.message) || 'Klarna nekade auktoriseringen';
+            this.render();
+            this.bind();
+            reject(new Error(this.message));
+          }
+        }
+      );
+    });
+  }
+
+  // Funktion för att hantera kortbetalning
+  async handleCardPayment() {
     let result = {};
 
-    // Om i API-läge, skicka betalningsdata till servern
     if (this.mode === 'api') {
       const res = await fetch(`${this.baseUrl}/payments`, {
         method: 'POST',
@@ -298,56 +492,32 @@ class PaymentSimulator extends HTMLElement {
         })
       });
 
-      // Försök att parsa svaret som JSON
       try {
         result = await res.json();
       } catch {
         result = {};
       }
-      // Logga status och resultat för felsökning
-      console.log('STATUS:', res.status);
-      console.log('RESULT:', result);
 
       if (!res.ok) {
         throw new Error(result.message || 'Betalningen misslyckades');
       }
-
-      // Om svaret inte innehåller en status, eller om status inte är "success", sätt status till "failed"
     } else {
       await new Promise((r) => setTimeout(r, 800));
-
-      // I demo-läge, slumpa fram ett resultat där 70% av betalningarna lyckas
       result = Math.random() > 0.3
         ? { status: 'success', message: 'Betalningen lyckades' }
         : { status: 'failed', message: 'Betalningen misslyckades' };
     }
 
-    // Uppdatera status och meddelande baserat på resultatet
-    this.status = result && result.status ? result.status : 'failed';
-    this.message = result && result.message ? result.message : 'Något gick fel';
+    this.status = result.status || 'failed';
+    this.message = result.message || 'Något gick fel';
 
-    // Skapa ett eventnamn baserat på betalningens status
-    const eventName =
-      this.status === 'success' ? 'payment-success' : 'payment-failed';
-
-    // Dispatcha ett custom event med betalningsresultatet
+    const eventName = this.status === 'success' ? 'payment-success' : 'payment-failed';
     this.dispatchEvent(new CustomEvent(eventName, {
       detail: result,
       bubbles: true,
       composed: true
     }));
-
-    // Om det uppstår ett fel under betalningsprocessen, logga felet och uppdatera status och meddelande
-  } catch (error) {
-    console.error('Frontendfel i pay():', error);
-    this.status = 'failed';
-    this.message = error.message || 'Något gick fel';
   }
-
-  // Rendera komponenten och binda event listeners igen för att uppdatera UI
-  this.render();
-  this.bind();
-}
 
   // Funktion för att rendera extra fält baserat på vald betalningsmetod
   renderFields() {
@@ -355,6 +525,9 @@ class PaymentSimulator extends HTMLElement {
       return `
         <input class="input" id="email" placeholder="E-post" value="${this.form.email}">
         <input class="input" id="phone" placeholder="Telefon" value="${this.form.phone}">
+        ${this.klarnaSession ? `
+          <div id="klarna-container" style="margin-top: 16px;"></div>
+        ` : ''}
       `;
     }
 
@@ -382,8 +555,6 @@ class PaymentSimulator extends HTMLElement {
       <div class="card">
         <h2 class="title">Betalning</h2>
 
-        <div class="row">Läge: ${this.mode}</div>
-
         <select id="plan" class="select" ${this.status === 'loading' ? 'disabled' : ''}>
           ${options}
         </select>
@@ -405,7 +576,13 @@ class PaymentSimulator extends HTMLElement {
         </div>
 
         <button id="pay" class="button" ${this.status === 'processing' ? 'disabled' : ''}>
-          ${this.status === 'processing' ? '...' : 'Betala'}
+          ${this.status === 'processing'
+            ? '...'
+            : this.method === 'klarna'
+            ? this.klarnaReady
+              ? 'Slutför Klarna'
+              : 'Betala med Klarna'
+            : 'Betala'}
         </button>
 
         <div class="status ${this.status === 'success' ? 'success' : 'error'}">

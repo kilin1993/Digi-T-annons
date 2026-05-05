@@ -541,6 +541,12 @@ if (languageSelect) {
 
     renderUiLanguage();
     await translateCurrentSite(selectedLanguage);
+    chatbot.setLanguage(selectedLanguage);
+
+    const currentSite = getCurrentSite();
+    if (currentSite) {
+      chatbot.reset(currentSite);
+    }
   });
 }
 
