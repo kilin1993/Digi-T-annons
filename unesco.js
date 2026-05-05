@@ -28,6 +28,10 @@ let currentLanguage = "sv";
 let userPosition = null;
 let currentDistanceKm = null;
 
+let primaryNearestSite = null;
+let primaryNearestDistanceKm = null;
+let currentNearbySites = [];
+
 let uiLanguage = "sv";
 
 const chatbot = initChatbot({
@@ -349,25 +353,22 @@ function getDistanceKm(lat1, lon1, lat2, lon2) {
   return 2 * R * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
 }
 
-// Hittar närmaste UNESCO plats baserat på användarens position
-function findNearestSite(position) {
-  return unescoSites.reduce(
-    (closest, site) => {
-      if (site.latitude == null || site.longitude == null) return closest;
 
-      const distanceKm = getDistanceKm(
+
+function findNearestSites(position, limit = 4) {
+  return unescoSites
+    .filter(site => site.latitude != null && site.longitude != null)
+    .map(site => ({
+      ...site,
+      distanceKm: getDistanceKm(
         position.latitude,
         position.longitude,
         Number(site.latitude),
         Number(site.longitude)
-      );
-
-      return distanceKm < closest.distanceKm
-        ? { site, distanceKm }
-        : closest;
-    },
-    { site: null, distanceKm: Infinity }
-  );
+      )
+    }))
+    .sort((a, b) => a.distanceKm - b.distanceKm)
+    .slice(0, limit);
 }
 
 
@@ -391,20 +392,86 @@ async function activateNearbyInfo() {
     unescoSites = sites;
     userPosition = position;
 
-    const { site, distanceKm } = findNearestSite(userPosition);
+    // NYTT: hämta flera närmaste istället för bara en
+    const nearestSites = findNearestSites(userPosition, 4);
+    const site = nearestSites[0];
+
+    primaryNearestSite = site;
+    primaryNearestDistanceKm = site.distanceKm;
+    currentNearbySites = nearestSites;
 
     if (!site) {
       return alert("Kunde inte hitta någon UNESCO-plats med koordinater.");
     }
 
-    currentDistanceKm = distanceKm;
+    currentDistanceKm = site.distanceKm;
     currentSiteIndex = unescoSites.findIndex(s => s.id === site.id);
 
+    // Visa huvudplatsen (som innan)
     await renderUnescoSite(site);
+
+    // NYTT: rendera fler alternativ under
+    renderNearbySites(nearestSites);
+
   } catch (error) {
     console.error("Kunde inte hämta användarens plats:", error);
     alert("Du behöver godkänna platsåtkomst för att använda funktionen.");
   }
+}
+
+function renderNearbySites(sites) {
+  const container = document.getElementById("nearbySites");
+  if (!container) return;
+
+  const currentSite = getCurrentSite();
+  const isViewingPrimary = primaryNearestSite && currentSite?.id === primaryNearestSite.id;
+
+  const alternatives = sites
+    .filter(site => site.id !== currentSite?.id)
+    .slice(0, 3);
+
+  container.innerHTML = `
+    ${!isViewingPrimary && primaryNearestSite ? `
+      <button class="nearby-back-btn" type="button">
+        ← Tillbaka till närmaste världsarv
+      </button>
+    ` : ""}
+
+    <h3>Fler världsarv i närheten</h3>
+
+    <div class="nearby-sites-list">
+      ${alternatives.map(site => `
+        <button class="nearby-site-card" data-site-id="${site.id}">
+          <span>${site.name}</span>
+          <small>${site.distanceKm.toFixed(1)} km </small>
+        </button>
+      `).join("")}
+    </div>
+  `;
+
+  const backBtn = container.querySelector(".nearby-back-btn");
+  if (backBtn) {
+    backBtn.addEventListener("click", async () => {
+      currentSiteIndex = unescoSites.findIndex(s => s.id === primaryNearestSite.id);
+      currentDistanceKm = primaryNearestDistanceKm;
+
+      await renderUnescoSite(primaryNearestSite);
+      renderNearbySites(currentNearbySites);
+    });
+  }
+
+  container.querySelectorAll(".nearby-site-card").forEach(button => {
+    button.addEventListener("click", async () => {
+      const site = sites.find(s => s.id === button.dataset.siteId);
+      if (!site) return;
+
+      currentSiteIndex = unescoSites.findIndex(s => s.id === site.id);
+      currentDistanceKm = site.distanceKm;
+
+      await renderUnescoSite(site);
+      renderNearbySites(currentNearbySites);
+    });
+  });
 }
 
 // Startar komponenten:
@@ -428,7 +495,7 @@ if (toggleDescriptionBtn) {
 }
 
 if (adCard) {
-  adCard.addEventListener("click", openAdpopout);
+  adCard.addEventListener("click", activateNearbyInfo);
 }
 
 window.addEventListener("load", initUnescoComponent);
