@@ -1,6 +1,7 @@
 import express from "express";
 import path from "path";
 import { fileURLToPath } from "url";
+import { sendNotification } from "./notificationService.js";
 import dotenv from "dotenv";
 dotenv.config();
 
@@ -323,6 +324,11 @@ app.post("/api/translate", async (req, res) => {
     console.error("Translation error:", error);
     res.status(500).json({ error: error.message });
   }
+});
+
+app.post("/api/notification/send", async (req, res) => {
+  const result = await sendNotification(req.body);
+  return res.status(result.status).json(result.body);
 });
 
 app.listen(port, () => {
