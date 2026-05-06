@@ -4,6 +4,7 @@ import { fileURLToPath } from "url";
 import { sendNotification } from "./notificationService.js";
 import dotenv from "dotenv";
 dotenv.config();
+import { adConfig } from "./ad-config.js";
 
 const app = express();
 const port = 3000;
@@ -14,10 +15,12 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 //planer för betalningsidan
-const plans = [
+/* const plans = [
   { id: "onetime", name: "Månatlig", amount: 49, currency: "SEK" },
   { id: "subscription", name: "Årlig", amount: 549, currency: "SEK" }
-];
+]; */
+//Pris sätts i konfigurationsfil av kund
+const plans = Object.values(adConfig.pricing);
 
 // Klarna Playground-konfiguration
 const KLARNA_BASE_URL = process.env.KLARNA_BASE_URL || 'https://api.playground.klarna.com';
