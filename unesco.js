@@ -440,24 +440,24 @@ function renderNearbySites(sites) {
     .filter(site => site.id !== currentSite?.id)
     .slice(0, 3);
 
-  container.innerHTML = `
-    ${!isViewingPrimary && primaryNearestSite ? `
-      <button class="nearby-back-btn" type="button">
-        ← Tillbaka till närmaste världsarv
+container.innerHTML = `
+  ${!isViewingPrimary && primaryNearestSite ? `
+    <button class="nearby-back-btn" type="button">
+      ${t("backToNearest", uiLanguage)}
+    </button>
+  ` : ""}
+
+  <h3>${t("nearbySites", uiLanguage)}</h3>
+
+  <div class="nearby-sites-list">
+    ${alternatives.map(site => `
+      <button class="nearby-site-card" data-site-id="${site.id}">
+        <span>${site.name}</span>
+        <small>${site.distanceKm.toFixed(1)} km</small>
       </button>
-    ` : ""}
-
-    <h3>Fler världsarv i närheten</h3>
-
-    <div class="nearby-sites-list">
-      ${alternatives.map(site => `
-        <button class="nearby-site-card" data-site-id="${site.id}">
-          <span>${site.name}</span>
-          <small>${site.distanceKm.toFixed(1)} km </small>
-        </button>
-      `).join("")}
-    </div>
-  `;
+    `).join("")}
+  </div>
+`;
 
   const backBtn = container.querySelector(".nearby-back-btn");
   if (backBtn) {
@@ -557,6 +557,11 @@ if (languageSelect) {
     uiLanguage = selectedLanguage === "en" ? "en" : "sv";
 
     renderUiLanguage();
+
+    if (currentNearbySites.length) {
+    renderNearbySites(currentNearbySites);
+    }
+
     await translateCurrentSite(selectedLanguage);
     chatbot.setLanguage(selectedLanguage);
 
