@@ -248,8 +248,13 @@ async function activateAndOpenPayment() {
         try {
           userPosition = await getUserLocation();
 
-          const { distanceKm } = findNearestSite(userPosition);
-          currentDistanceKm = distanceKm;
+          const nearestSites = findNearestSites(userPosition, 4);
+          const nearestSite = nearestSites[0];
+
+    if (nearestSite) {
+      currentDistanceKm = nearestSite.distanceKm;
+    }
+
         } catch (error) {
           console.warn("Platsåtkomst nekades eller misslyckades:", error);
         }
@@ -275,13 +280,15 @@ async function activateAndOpenPayment() {
     unescoSites = sites;
     userPosition = position;
 
-    const { site, distanceKm } = findNearestSite(userPosition);
+    const nearestSites = findNearestSites(userPosition, 4);
+    const site = nearestSites[0];
 
     if (!site) {
       return alert("Kunde inte hitta någon UNESCO-plats.");
     }
 
-    currentDistanceKm = distanceKm;
+
+    currentDistanceKm = site.distanceKm;
     currentSiteIndex = unescoSites.findIndex(s => s.id === site.id);
 
     await renderUnescoSite(site);
@@ -427,6 +434,7 @@ async function activateNearbyInfo() {
     console.error("Kunde inte hämta användarens plats:", error);
     alert("Du behöver godkänna platsåtkomst för att använda funktionen.");
   }
+
 }
 
 function renderNearbySites(sites) {
