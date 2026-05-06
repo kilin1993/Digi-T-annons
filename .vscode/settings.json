@@ -1,0 +1,4 @@
+{
+    "appService.defaultWebAppToDeploy": "/subscriptions/e72621a0-81ed-47d5-b9ff-13621e4aa628/resourceGroups/unesco-annons/providers/Microsoft.Web/sites/unesco-app",
+    "appService.deploySubpath": "."
+}
