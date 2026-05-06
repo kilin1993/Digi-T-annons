@@ -24,6 +24,8 @@ export const uiTexts = {
     showMore: "Visa mer",
     showLess: "Visa mindre",
     unescoLink: "Läs mer hos UNESCO →",
+    nearbySites: "Fler världsarv i närheten",
+    backToNearest: "← Tillbaka till närmaste världsarv",
   },
 
   en: {
@@ -51,6 +53,8 @@ export const uiTexts = {
     showMore: "Show more",
     showLess: "Show less",
     unescoLink: "Read more at UNESCO →",
+    nearbySites: "More nearby world heritage sites",
+    backToNearest: "← Back to nearest world heritage site",
   }
 };
 
