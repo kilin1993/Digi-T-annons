@@ -22,7 +22,7 @@ let currentFullDescription = "";
 
 //Sparar orginalspråk och översatt språk
 let originalDescription = "";
-let currentLanguage = "sv";
+let currentLanguage = getPageLanguage();
 
 // Kommer att uppdateras av geolacation i webbläsaren
 let userPosition = null;
@@ -32,7 +32,7 @@ let primaryNearestSite = null;
 let primaryNearestDistanceKm = null;
 let currentNearbySites = [];
 
-let uiLanguage = "sv";
+let uiLanguage = getPageLanguage();
 
 const chatbot = initChatbot({
   getCurrentSite,
@@ -335,6 +335,16 @@ async function translateCurrentSite(language) {
   }
 }
 
+function getPageLanguage() {
+  const pageLang = document.documentElement.lang || "en";
+  const shortLang = pageLang.slice(0, 2).toLowerCase();
+
+  if (shortLang === "sv") return "sv";
+  if (shortLang === "en") return "en";
+
+  return "en";
+}
+
 
 // Haversine formeln för att räkna ut avstånd i km mellan två koordinater
 const toRadians = (value) => (value * Math.PI) / 180;
@@ -478,6 +488,13 @@ function renderNearbySites(sites) {
 // 1. hämtar data
 // 2. visar första UNESCO-posten
 async function initUnescoComponent() {
+  currentLanguage = getPageLanguage();
+  uiLanguage = getPageLanguage();
+
+  if (languageSelect) {
+    languageSelect.value = currentLanguage;
+  }
+
   unescoSites = await loadUnescoSites();
 
   if (!unescoSites.length) {
