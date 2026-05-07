@@ -465,6 +465,144 @@ app.post("/api/translate", async (req, res) => {
   }
 });
 
+const subscriptions = [];
+const sentHeritageNotifications = new Set();
+
+function createSubscriptionId() {
+  return `sub_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
+}
+
+app.post("/api/subscriptions", async (req, res) => {
+  try {
+    const { email, phone, notificationType } = req.body;
+
+    if (!email || !phone || !notificationType) {
+      return res.status(400).json({
+        success: false,
+        error: "missing_fields"
+      });
+    }
+
+    const subscription = {
+      id: createSubscriptionId(),
+      email,
+      phone,
+      notificationType,
+      active: true,
+      created_at: new Date().toISOString()
+    };
+
+    subscriptions.push(subscription);
+
+    await sendNotification({
+      channel: "email",
+      to: email,
+      subject: "Bekräftelse på prenumeration",
+      message: `Du har registrerat dig för notiser om UNESCO-världsarv. Vald notistyp: ${notificationType}.`,
+      user_id: subscription.id,
+      site_id: "subscription-confirmation"
+    });
+
+    return res.json({
+      success: true,
+      subscription
+    });
+  } catch (error) {
+    console.error("Subscription error:", error);
+    return res.status(500).json({
+      success: false,
+      error: "server_error"
+    });
+  }
+});
+
+app.post("/api/subscriptions/cancel", (req, res) => {
+  const { subscriptionId } = req.body;
+
+  const subscription = subscriptions.find((sub) => sub.id === subscriptionId);
+
+  if (!subscription) {
+    return res.status(404).json({
+      success: false,
+      error: "not_found"
+    });
+  }
+
+  subscription.active = false;
+
+  return res.json({
+    success: true,
+    subscription
+  });
+});
+
+app.post("/api/subscriptions/notify-nearby", async (req, res) => {
+  try {
+    const { subscriptionId, site } = req.body;
+
+    const subscription = subscriptions.find(
+      (sub) => sub.id === subscriptionId && sub.active
+    );
+
+    if (!subscription) {
+      return res.status(404).json({
+        success: false,
+        error: "subscription_not_found"
+      });
+    }
+
+    if (!site || !site.id || !site.name) {
+      return res.status(400).json({
+        success: false,
+        error: "invalid_site"
+      });
+    }
+
+    const key = `${subscription.id}:${site.id}`;
+
+    if (sentHeritageNotifications.has(key)) {
+      return res.json({
+        success: true,
+        skipped: true,
+        reason: "already_sent"
+      });
+    }
+
+    if (subscription.notificationType === "sms" || subscription.notificationType === "both") {
+      await sendNotification({
+        channel: "sms",
+        to: subscription.phone,
+        message: `Hej! Du är nära världsarvet ${site.name}. Läs mer här: ${site.url || ""}`,
+        user_id: subscription.id,
+        site_id: site.id
+      });
+    }
+
+    if (subscription.notificationType === "email" || subscription.notificationType === "both") {
+      await sendNotification({
+        channel: "email",
+        to: subscription.email,
+        subject: `Du är nära ${site.name}`,
+        message: `Hej! Du är nära världsarvet ${site.name}. Läs mer här: ${site.url || ""}`,
+        user_id: subscription.id,
+        site_id: site.id
+      });
+    }
+
+    sentHeritageNotifications.add(key);
+
+    return res.json({
+      success: true
+    });
+  } catch (error) {
+    console.error("Nearby notification error:", error);
+    return res.status(500).json({
+      success: false,
+      error: "server_error"
+    });
+  }
+});
+
 app.post("/api/notification/send", async (req, res) => {
   const result = await sendNotification(req.body);
   return res.status(result.status).json(result.body);
