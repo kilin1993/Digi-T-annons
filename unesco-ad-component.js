@@ -6,7 +6,8 @@ if (root) {
     root.innerHTML = `
         <!-- Annonsyta -->
         <div class="sidebar-box ad" role="button" tabindex="0" aria-label="Öppna UNESCO-annons">
-            Annonsyta
+        <div class="unesco-badge">UNESCO World Heritage</div>    
+        Annonsyta
         </div>
 
         <!-- Overlay -->
