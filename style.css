@@ -115,9 +115,9 @@ body {
 }
 
 @media (max-width: 600px) {
-  .ad {
-    max-width: 100%;
-  }
+    .ad {
+        max-width: 100%;
+    }
 }
 
 button {
@@ -202,8 +202,11 @@ button {
     position: absolute;
     top: 14px;
     right: 14px;
+    display: grid;
+    place-items: center;
     width: 38px;
     height: 38px;
+    padding: 0;
     border-radius: 50%;
     background: #f3f3f3;
     border: none;
@@ -246,7 +249,7 @@ button {
     display: flex;
     align-items: center;
     gap: 12px;
-    flex-wrap: wrap;
+    flex-wrap: nowrap;
     margin-bottom: 18px;
 }
 
@@ -275,8 +278,10 @@ button {
 
 .chat-toggle {
     flex: 0 0 auto;
-    display: inline-grid;
-    place-items: center;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    align-self: center;
     width: 42px;
     height: 42px;
     padding: 0;
@@ -286,6 +291,7 @@ button {
     border: none;
     font-size: 20px;
     line-height: 1;
+    margin: 0;
 }
 
 .chat-icon {
@@ -412,62 +418,114 @@ button {
     background: rgba(255, 255, 255, 0.95);
     font-size: 20px;
 }
+
 /* Payment modal */
 .payment-modal {
-  position: fixed;
-  inset: 0;
-  background: rgba(0,0,0,0.5);
-  display: none;
-  align-items: center;
-  justify-content: center;
-  z-index: 99999;
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.5);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    z-index: 99999;
 }
 
 .payment-modal.active {
-  display: flex;
+    display: flex;
 }
 
 .payment-box {
-  background: white;
-  width: 420px;
-  max-width: 90%;
-  padding: 20px;
-  border-radius: 14px;
-  box-shadow: 0 20px 50px rgba(0,0,0,0.3);
-  min-height: 200px;
+    position: relative;
+    background: white;
+    width: 420px;
+    max-width: 90%;
+    padding: 20px;
+    border-radius: 14px;
+    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.3);
+    min-height: 200px;
 }
 
 @media (max-width: 900px) {
-    .popup.show {
-        grid-template-columns: 1fr;
-    }
 
-    .popup-left {
-        min-height: 220px;
-    }
+.popup {
+    width: min(520px, calc(100vw - 16px));
+    max-height: calc(100vh - 16px);
+    overflow-y: auto;
+}
 
-    .popup-title {
-        font-size: 30px;
-    }
+.popup.show {
+    display: block;
+}
 
-    .chat-form {
-        grid-template-columns: 1fr;
-    }
+.popup-left {
+    min-height: 165px;
+    background-position: center top;
+}
 
-    .headline {
-        font-size: 34px;
-    }
+.popup-title {
+    font-size: 30px;
+}
 
-    .hero,
-    .content {
-        grid-template-columns: 1fr;
-    }
+.popup-right {
+    padding: 20px 18px 24px;
+    max-height: none;
+    overflow: visible;
+}
 
-    .side-popup {
-        width: calc(100vw - 24px);
-        right: 12px;
-        bottom: 12px;
-    }
+.unesco-badge {
+    top: 14px;
+    left: 14px;
+    font-size: 13px;
+    padding: 8px 12px;
+    border-radius: 10px;
+    z-index: 2;
+}
+
+.close-btn {
+    top: 12px;
+    right: 12px;
+    z-index: 3;
+}
+
+.chat-form {
+    grid-template-columns: 1fr;
+}
+
+.headline {
+    font-size: 34px;
+}
+
+.hero,
+.content {
+    grid-template-columns: 1fr;
+}
+
+.side-popup {
+    width: calc(100vw - 24px);
+    right: 12px;
+    bottom: 12px;
+}
+}
+
+@media (max-width: 480px) {
+
+.popup-actions>button {
+    font-size: 12px;
+    padding: 10px 12px;
+}
+
+.popup-actions .primary,
+.popup-actions .secondary {
+    flex: 1;
+    white-space: nowrap;
+}
+
+.popup-actions .chat-toggle {
+    flex: 0 0 42px;
+    width: 42px;
+    height: 42px;
+    padding: 0;
+}
 }
 
 .translation-controls {
@@ -494,66 +552,62 @@ label[for="languageSelect"] {
     display: block;
 }
 
-.payment-box {
-  position: relative; /* 👈 lägg till denna */
-}
-
 .hidden {
-  display: none;
+    display: none;
 }
 
 .payment-inline {
-  margin-top: 18px;
+    margin-top: 18px;
 }
 
 .nearby-sites {
-  margin-top: 16px;
+    margin-top: 16px;
 }
 
 .nearby-sites h3 {
-  font-size: 14px;
-  margin-bottom: 8px;
-  color: #666;
+    font-size: 14px;
+    margin-bottom: 8px;
+    color: #666;
 }
 
 .nearby-sites-list {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
 }
 
 .nearby-site-card {
-  background: #f3f3f3;
-  border: none;
-  border-radius: 12px;
-  padding: 10px 12px;
-  text-align: left;
-  cursor: pointer;
-  transition: all 0.2s ease;
+    background: #f3f3f3;
+    border: none;
+    border-radius: 12px;
+    padding: 10px 12px;
+    text-align: left;
+    cursor: pointer;
+    transition: all 0.2s ease;
 }
 
 .nearby-site-card span {
-  display: block;
-  font-weight: 600;
-  font-size: 14px;
+    display: block;
+    font-weight: 600;
+    font-size: 14px;
 }
 
 .nearby-site-card small {
-  font-size: 12px;
-  color: #666;
+    font-size: 12px;
+    color: #666;
 }
 
 .nearby-site-card:hover {
-  background: #e7e7e7;
-  transform: translateY(-1px);
+    background: #e7e7e7;
+    transform: translateY(-1px);
 }
 
 .nearby-back-btn {
-  margin-bottom: 10px;
-  border: none;
-  background: transparent;
-  color: #005bd3;
-  font-weight: 600;
-  cursor: pointer;
-  padding: 0;
+    margin-bottom: 10px;
+    border: none;
+    background: transparent;
+    color: #005bd3;
+    font-weight: 600;
+    cursor: pointer;
+    padding: 0;
 }
