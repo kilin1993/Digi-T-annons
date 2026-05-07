@@ -91,6 +91,25 @@ const style = `
   opacity: 0.6;
   cursor: not-allowed;
 }
+
+.subscription-box {
+  border: 1px solid #e5e5e5;
+  border-radius: 14px;
+  padding: 16px;
+  margin-bottom: 18px;
+  background: #fafafa;
+}
+
+.subscription-box h3 {
+  margin: 0 0 6px;
+  font-size: 1rem;
+}
+
+.subscription-box p {
+  margin: 0 0 12px;
+  font-size: 0.85rem;
+  color: #555;
+}
 `;
 
 // Payment Simulator Web Component
@@ -119,6 +138,7 @@ class PaymentSimulator extends HTMLElement {
     this.form = {
       email: '',
       phone: '',
+      notificationType: 'sms',
       cardName: '',
       cardNumber: '',
       expiry: '',
@@ -165,8 +185,8 @@ class PaymentSimulator extends HTMLElement {
       this.selectedPlan = this.plans[0]?.id || '';
       this.status = 'idle';
       this.message = '';
-    
-    // Om det uppstår ett fel, sätt status till "failed" och visa ett felmeddelande
+
+      // Om det uppstår ett fel, sätt status till "failed" och visa ett felmeddelande
     } catch {
       this.status = 'failed';
       this.message = 'Kunde inte hämta planer';
@@ -206,6 +226,7 @@ class PaymentSimulator extends HTMLElement {
     const cardNumber = this.shadowRoot.querySelector('#cardNumber');
     const expiry = this.shadowRoot.querySelector('#expiry');
     const cvc = this.shadowRoot.querySelector('#cvc');
+    const notificationType = this.shadowRoot.querySelector('#notificationType');
 
     // Binda inputhändelser för att uppdatera formdata
     if (email) email.oninput = (e) => (this.form.email = e.target.value);
@@ -215,6 +236,12 @@ class PaymentSimulator extends HTMLElement {
     if (expiry) expiry.oninput = (e) => (this.form.expiry = e.target.value);
     if (cvc) cvc.oninput = (e) => (this.form.cvc = e.target.value);
 
+    this.shadowRoot.querySelectorAll('[name="notificationType"]').forEach((el) => {
+      el.onchange = (e) => {
+        this.form.notificationType = e.target.value;
+      };
+    });
+
     // När "Betala" knappen klickas, starta betalningsprocessen
     if (pay) {
       pay.onclick = () => this.pay();
@@ -223,11 +250,10 @@ class PaymentSimulator extends HTMLElement {
 
   // Funktion för att validera formuläret innan betalning
   validate() {
-  if (!this.selectedPlan) {
-    return 'Välj en plan';
-  }
+    if (!this.selectedPlan) {
+      return 'Välj en plan';
+    }
 
-  if (this.method === 'klarna') {
     if (!this.form.email.trim()) {
       return 'Fyll i e-post';
     }
@@ -235,28 +261,35 @@ class PaymentSimulator extends HTMLElement {
     if (!this.form.phone.trim()) {
       return 'Fyll i telefonnummer';
     }
+
+    if (!/^\+46\d{9}$/.test(this.form.phone.trim())) {
+      return 'Telefonnummer måste ha formatet +46701234567';
+    }
+
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(this.form.email.trim())) {
+      return 'Fyll i en giltig e-postadress';
+    }
+
+    if (this.method === 'card') {
+      if (!this.form.cardName.trim()) {
+        return 'Fyll i kortinnehavarens namn';
+      }
+
+      if (!this.form.cardNumber.trim()) {
+        return 'Fyll i kortnummer';
+      }
+
+      if (!this.form.expiry.trim()) {
+        return 'Fyll i utgångsdatum';
+      }
+
+      if (!this.form.cvc.trim()) {
+        return 'Fyll i CVC';
+      }
+    }
+
+    return '';
   }
-
-  if (this.method === 'card') {
-    if (!this.form.cardName.trim()) {
-      return 'Fyll i kortinnehavarens namn';
-    }
-
-    if (!this.form.cardNumber.trim()) {
-      return 'Fyll i kortnummer';
-    }
-
-    if (!this.form.expiry.trim()) {
-      return 'Fyll i utgångsdatum';
-    }
-
-    if (!this.form.cvc.trim()) {
-      return 'Fyll i CVC';
-    }
-  }
-
-  return '';
-}
 
   // Funktion för att hantera betalning
   async pay() {
@@ -308,7 +341,7 @@ class PaymentSimulator extends HTMLElement {
     this.bind();
   }
 
-    // Funktion för att hantera Klarna betalning
+  // Funktion för att hantera Klarna betalning
   async handleKlarnaPayment() {
     try {
       const response = await fetch(`${this.baseUrl}/klarna/sessions`, {
@@ -348,7 +381,7 @@ class PaymentSimulator extends HTMLElement {
     }
   }
 
-    // Funktion för att ladda Klarna SDK
+  // Funktion för att ladda Klarna SDK
   async loadKlarna() {
     if (window.Klarna) return;
 
@@ -441,7 +474,12 @@ class PaymentSimulator extends HTMLElement {
               this.dispatchEvent(new CustomEvent('payment-success', {
                 detail: {
                   order_id: orderData.order_id,
-                  method: 'klarna'
+                  method: 'klarna',
+                  customer: {
+                    email: this.form.email,
+                    phone: this.form.phone,
+                    notificationType: this.form.notificationType
+                  }
                 },
                 bubbles: true,
                 composed: true
@@ -513,7 +551,14 @@ class PaymentSimulator extends HTMLElement {
 
     const eventName = this.status === 'success' ? 'payment-success' : 'payment-failed';
     this.dispatchEvent(new CustomEvent(eventName, {
-      detail: result,
+      detail: {
+        ...result,
+        customer: {
+          email: this.form.email,
+          phone: this.form.phone,
+          notificationType: this.form.notificationType
+        }
+      },
       bubbles: true,
       composed: true
     }));
@@ -521,10 +566,9 @@ class PaymentSimulator extends HTMLElement {
 
   // Funktion för att rendera extra fält baserat på vald betalningsmetod
   renderFields() {
+
     if (this.method === 'klarna') {
       return `
-        <input class="input" id="email" placeholder="E-post" value="${this.form.email}">
-        <input class="input" id="phone" placeholder="Telefon" value="${this.form.phone}">
         ${this.klarnaSession ? `
           <div id="klarna-container" style="margin-top: 16px;"></div>
         ` : ''}
@@ -553,7 +597,53 @@ class PaymentSimulator extends HTMLElement {
     this.shadowRoot.innerHTML = `
       <style>${style}</style>
       <div class="card">
-        <h2 class="title">Betalning</h2>
+
+      <h2 class="title">1. Prenumeration</h2>
+
+      <div class="subscription-box">
+
+        <h3>Registrera dig</h3>
+
+        <p>
+          Få SMS och e-post när du är nära ett UNESCO-världsarv.
+        </p>
+
+        <input
+          class="input"
+          id="email"
+          type="email"
+          placeholder="E-post"
+          value="${this.form.email}"
+        >
+
+        <input
+          class="input"
+          id="phone"
+          type="tel"
+          placeholder="+46701234567"
+          value="${this.form.phone}"
+        >
+
+        <div class="notice-options">
+          <label>
+            <input type="radio" name="notificationType" value="sms" ${this.form.notificationType === 'sms' ? 'checked' : ''}>
+            SMS
+          </label>
+
+          <label>
+            <input type="radio" name="notificationType" value="email" ${this.form.notificationType === 'email' ? 'checked' : ''}>
+            E-post
+          </label>
+
+          <label>
+            <input type="radio" name="notificationType" value="both" ${this.form.notificationType === 'both' ? 'checked' : ''}>
+            SMS & E-post
+          </label>
+        </div>
+
+        </div>
+        
+        <h2 class="title">2. Betalning</h2>
 
         <select id="plan" class="select" ${this.status === 'loading' ? 'disabled' : ''}>
           ${options}
@@ -577,12 +667,12 @@ class PaymentSimulator extends HTMLElement {
 
         <button id="pay" class="button" ${this.status === 'processing' ? 'disabled' : ''}>
           ${this.status === 'processing'
-            ? '...'
-            : this.method === 'klarna'
-            ? this.klarnaReady
-              ? 'Slutför Klarna'
-              : 'Betala med Klarna'
-            : 'Betala'}
+        ? '...'
+        : this.method === 'klarna'
+          ? this.klarnaReady
+            ? 'Slutför Klarna'
+            : 'Betala med Klarna'
+          : 'Betala'}
         </button>
 
         <div class="status ${this.status === 'success' ? 'success' : 'error'}">
