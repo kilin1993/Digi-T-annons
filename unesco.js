@@ -219,22 +219,42 @@ function getUnescoSiteByName(name) {
   );
 }
 
-// Hämtar användarens geolocation
-function getUserLocation() {
-  return new Promise((resolve, reject) => {
-    if (!navigator.geolocation) {
-      return reject(new Error("Geolocation stöds inte i webbläsaren."));
+// Hämtar användarens geolocation med fallback lösning
+async function getUserLocation() {
+  // Försök 1: Använd navigator.geolocation
+  try {
+    if (navigator.geolocation) {
+      return await new Promise((resolve, reject) => {
+        navigator.geolocation.getCurrentPosition(
+          ({ coords }) =>
+            resolve({
+              latitude: coords.latitude,
+              longitude: coords.longitude
+            }),
+          reject,
+          { timeout: 5000 }
+        );
+      });
     }
+  } catch (error) {
+    console.warn("Geolocation misslyckades:", error);
+  }
 
-    navigator.geolocation.getCurrentPosition(
-      ({ coords }) =>
-        resolve({
-          latitude: coords.latitude,
-          longitude: coords.longitude
-        }),
-      reject
-    );
-  });
+  // Försök 2: Fallback till GeoIP API
+  try {
+    const response = await fetch('https://ipapi.co/json/');
+    if (response.ok) {
+      const data = await response.json();
+      console.log("Använder GeoIP fallback, land:", data.country_code);
+      return {
+        latitude: data.latitude,
+        longitude: data.longitude,
+        country: data.country_code
+      };
+    }
+  } catch (error) {
+    console.warn("GeoIP fallback misslyckades:", error);
+  };
 }
 
 async function activateAndOpenPayment() {
