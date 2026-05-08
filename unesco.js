@@ -32,6 +32,10 @@ let primaryNearestSite = null;
 let primaryNearestDistanceKm = null;
 let currentNearbySites = [];
 
+let activeSubscription = null;
+let locationWatchId = null;
+const NOTIFY_RADIUS_KM = 5;
+
 let uiLanguage = getPageLanguage();
 
 const chatbot = initChatbot({
@@ -512,6 +516,91 @@ container.innerHTML = `
   });
 }
 
+async function createSubscriptionAfterPayment(customer) {
+  const response = await fetch("/api/subscriptions", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json"
+    },
+    body: JSON.stringify(customer)
+  });
+
+  const data = await response.json();
+
+  if (!response.ok) {
+    alert("Betalningen gick igenom, men prenumerationen kunde inte skapas.");
+    return;
+  }
+
+  activeSubscription = data.subscription;
+  localStorage.setItem("activeSubscription", JSON.stringify(activeSubscription));
+
+  alert("Prenumerationen är aktiv! Bekräftelsemejl har skickats.");
+
+  startLocationMonitoring();
+}
+
+function startLocationMonitoring() {
+  if (!activeSubscription) return;
+
+  if (!navigator.geolocation) {
+    alert("Platstjänst stöds inte i webbläsaren.");
+    return;
+  }
+
+  if (locationWatchId !== null) {
+    navigator.geolocation.clearWatch(locationWatchId);
+  }
+
+  locationWatchId = navigator.geolocation.watchPosition(
+    async ({ coords }) => {
+      const position = {
+        latitude: coords.latitude,
+        longitude: coords.longitude
+      };
+
+      const nearestSites = findNearestSites(position, 1);
+      const nearestSite = nearestSites[0];
+
+      if (!nearestSite) return;
+
+      if (nearestSite.distanceKm <= NOTIFY_RADIUS_KM) {
+        await notifyNearbyHeritage(nearestSite);
+      }
+    },
+    (error) => {
+      console.error("Location monitoring error:", error);
+    },
+    {
+      enableHighAccuracy: true,
+      maximumAge: 30000,
+      timeout: 10000
+    }
+  );
+}
+
+async function notifyNearbyHeritage(site) {
+  if (!activeSubscription) return;
+
+  const response = await fetch("/api/subscriptions/notify-nearby", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json"
+    },
+    body: JSON.stringify({
+      subscriptionId: activeSubscription.id,
+      site: {
+        id: site.id,
+        name: site.name,
+        url: site.url
+      }
+    })
+  });
+
+  const data = await response.json();
+  console.log("Nearby notification:", data);
+}
+
 // Startar komponenten:
 // 1. hämtar data
 // 2. visar första UNESCO-posten
@@ -616,3 +705,14 @@ window.getUnescoSiteById = getUnescoSiteById;
 window.getUnescoSiteByName = getUnescoSiteByName;
 window.loadUnescoSites = loadUnescoSites;
 window.activateAndOpenPayment = activateAndOpenPayment;
+
+document.addEventListener("payment-success", async (event) => {
+  const customer = event.detail.customer;
+
+  if (!customer) {
+    console.warn("payment-success saknar customer-data");
+    return;
+  }
+
+  await createSubscriptionAfterPayment(customer);
+});
