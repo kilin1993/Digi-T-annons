@@ -5,55 +5,145 @@ const style = `
 }
 :host {
   display: block;
-  max-width: 400px;
+  max-width: 560px;
   font-family: Arial, sans-serif;
-  color: #111;
+  color: #12352f;
 }
 
 .card {
-  border: 1px solid #ddd;
-  border-radius: 12px;
-  padding: 20px;
+  border: 1px solid #e2e8e4;
+  border-radius: 18px;
+  padding: 26px;
   background: #fff;
+  box-shadow: 0 12px 35px rgba(0,0,0,0.08);
+}
+
+.stepper {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-bottom: 24px;
+  color: #777;
+  font-size: 0.9rem;
+}
+
+.step {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.step-number {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: #e7eee9;
+  color: #12352f;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: bold;
+}
+
+.step.active .step-number {
+  background: #0f5132;
+  color: white;
 }
 
 .title {
-  font-size: 1.2rem;
-  font-weight: bold;
+  font-size: 1.35rem;
+  font-weight: 800;
+  margin: 18px 0 14px;
+  color: #12352f;
+}
+
+.section {
+  border-top: 1px solid #e5e7eb;
+  padding-top: 18px;
+  margin-top: 18px;
+}
+
+.subscription-box {
+  border: 1px solid #e2e8e4;
+  border-radius: 16px;
+  padding: 18px;
+  background: #fbfdfb;
+}
+
+.subscription-box h3 {
+  margin: 0 0 6px;
+  font-size: 1.05rem;
+}
+
+.subscription-box p {
+  margin: 0 0 14px;
+  font-size: 0.9rem;
+  color: #555;
+}
+
+.input,
+.select {
+  width: 100%;
+  box-sizing: border-box;
+  height: 48px;
+  padding: 0 14px;
+  border: 1px solid #d7ddd9;
+  border-radius: 12px;
+  background: #fff;
+  font-size: 0.95rem;
   margin-bottom: 10px;
+}
+
+.input:focus,
+.select:focus {
+  outline: none;
+  border-color: #0f5132;
+  box-shadow: 0 0 0 3px rgba(15,81,50,0.12);
+}
+
+.notice-options,
+.methods {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin: 12px 0;
+}
+
+.notice-options label,
+.methods label {
+  border: 1px solid #d7ddd9;
+  border-radius: 12px;
+  padding: 10px 14px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: white;
+  cursor: pointer;
+  font-size: 0.95rem;
 }
 
 .row {
   margin-bottom: 12px;
 }
 
-.input {
-  width: 100%;
-  height: 40px;
-  padding: 0 10px;
-  border: 1px solid #ccc;
-  border-radius: 8px;
-}
-
-.input .card {
-  letter-spacing: 2px;
-}
-
-.methods {
-  display: flex;
+.card-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
   gap: 10px;
-  margin-bottom: 12px;
 }
 
 .button {
   width: 100%;
-  height: 45px;
+  height: 50px;
   border: none;
-  border-radius: 10px;
-  background: black;
+  border-radius: 12px;
+  background: #0f5132;
   color: white;
-  font-weight: bold;
+  font-weight: 800;
   cursor: pointer;
+  font-size: 1rem;
+  margin-top: 8px;
+  box-shadow: 0 8px 18px rgba(15,81,50,0.22);
 }
 
 .button:disabled {
@@ -61,57 +151,23 @@ const style = `
 }
 
 .status {
-  margin-top: 10px;
+  margin-top: 12px;
   font-size: 0.9rem;
 }
 
 .error {
-  color: red;
+  color: #d12b2b;
 }
 
 .success {
-  color: green;
+  color: #0f5132;
 }
 
-.select {
-  width: 100%;
-  height: 42px;
-  padding: 0 10px;
-  margin-bottom: 14px;
-  border: 1px solid #ccc;
-  border-radius: 8px;
-  background: #fff;
-  font-size: 0.95rem;
-  cursor: pointer;
-}
-
-.select:focus {
-  outline: none;
-  border-color: #111;
-}
-
-.select:disabled {
-  opacity: 0.6;
-  cursor: not-allowed;
-}
-
-.subscription-box {
-  border: 1px solid #e5e5e5;
-  border-radius: 14px;
-  padding: 16px;
-  margin-bottom: 18px;
-  background: #fafafa;
-}
-
-.subscription-box h3 {
-  margin: 0 0 6px;
-  font-size: 1rem;
-}
-
-.subscription-box p {
-  margin: 0 0 12px;
-  font-size: 0.85rem;
-  color: #555;
+.safe-text {
+  margin-top: 12px;
+  font-size: 0.8rem;
+  color: #64748b;
+  text-align: center;
 }
 `;
 
@@ -569,7 +625,6 @@ class PaymentSimulator extends HTMLElement {
 
   // Funktion för att rendera extra fält baserat på vald betalningsmetod
   renderFields() {
-
     if (this.method === 'klarna') {
       return `
         ${this.klarnaSession ? `
@@ -582,8 +637,10 @@ class PaymentSimulator extends HTMLElement {
       return `
         <input class="input" id="cardName" placeholder="Kortinnehavarens namn" value="${this.form.cardName}">
         <input class="input" id="cardNumber" placeholder="1234 1234 1234 1234" value="${this.form.cardNumber}">
-        <input class="input" id="expiry" placeholder="MM/ÅÅ" value="${this.form.expiry}">
-        <input class="input" id="cvc" placeholder="CVC" value="${this.form.cvc}">
+        <div class="card-row">
+          <input class="input" id="expiry" placeholder="MM/ÅÅ" value="${this.form.expiry}">
+          <input class="input" id="cvc" placeholder="CVC" value="${this.form.cvc}">
+        </div>
       `;
     }
 
@@ -599,58 +656,72 @@ class PaymentSimulator extends HTMLElement {
 
     this.shadowRoot.innerHTML = `
       <style>${style}</style>
+
       <div class="card">
 
-      <h2 class="title">1. Prenumeration</h2>
-
-      <div class="subscription-box">
-
-        <h3>Registrera dig</h3>
-
-        <p>
-          Få SMS och e-post när du är nära ett UNESCO-världsarv.
-        </p>
-
-        <input
-          class="input"
-          id="email"
-          type="email"
-          placeholder="E-post"
-          value="${this.form.email}"
-        >
-
-        <input
-          class="input"
-          id="phone"
-          type="tel"
-          placeholder="+46701234567"
-          value="${this.form.phone}"
-        >
-
-        <div class="notice-options">
-          <label>
-            <input type="radio" name="notificationType" value="sms" ${this.form.notificationType === 'sms' ? 'checked' : ''}>
-            SMS
-          </label>
-
-          <label>
-            <input type="radio" name="notificationType" value="email" ${this.form.notificationType === 'email' ? 'checked' : ''}>
-            E-post
-          </label>
-
-          <label>
-            <input type="radio" name="notificationType" value="both" ${this.form.notificationType === 'both' ? 'checked' : ''}>
-            SMS & E-post
-          </label>
+        <div class="stepper">
+          <div class="step active">
+            <span class="step-number">1</span>
+            <span>Prenumerera</span>
+          </div>
+          <span>—</span>
+          <div class="step">
+            <span class="step-number">2</span>
+            <span>Betalning</span>
+          </div>
+          <span>—</span>
+          <div class="step">
+            <span class="step-number">3</span>
+            <span>Klart</span>
+          </div>
         </div>
 
-        </div>
-        
-        <h2 class="title">2. Betalning</h2>
+        <h2 class="title">1. Prenumeration</h2>
 
-        <select id="plan" class="select" ${this.status === 'loading' ? 'disabled' : ''}>
-          ${options}
-        </select>
+        <div class="subscription-box">
+          <h3>Registrera dig</h3>
+          <p>Få SMS när du är nära ett UNESCO-världsarv. Bekräftelse skickas till din e-post.</p>
+
+          <input
+            class="input"
+            id="email"
+            type="email"
+            placeholder="Din e-postadress"
+            value="${this.form.email}"
+          >
+
+          <input
+            class="input"
+            id="phone"
+            type="tel"
+            placeholder="Ditt mobilnummer, t.ex. +46701234567"
+            value="${this.form.phone}"
+          >
+
+          <div class="notice-options">
+            <label>
+              <input type="radio" name="notificationType" value="sms" ${this.form.notificationType === 'sms' ? 'checked' : ''}>
+              SMS
+            </label>
+
+            <label>
+              <input type="radio" name="notificationType" value="email" ${this.form.notificationType === 'email' ? 'checked' : ''}>
+              E-post
+            </label>
+
+            <label>
+              <input type="radio" name="notificationType" value="both" ${this.form.notificationType === 'both' ? 'checked' : ''}>
+              SMS & E-post
+            </label>
+          </div>
+        </div>
+
+        <div class="section">
+          <h2 class="title">2. Betalning</h2>
+
+          <select id="plan" class="select" ${this.status === 'loading' ? 'disabled' : ''}>
+            ${options}
+          </select>
 
         <div class="methods">
           <label>
@@ -665,24 +736,27 @@ class PaymentSimulator extends HTMLElement {
         </div>
 
         <div class="row">
-        ${this.renderFields()}
+          ${this.renderFields()}
         </div>
 
         <button id="pay" class="button" ${this.status === 'processing' ? 'disabled' : ''}>
           ${this.status === 'processing'
-        ? '...'
-        : this.method === 'klarna'
-          ? this.klarnaReady
-            ? 'Slutför Klarna'
-            : 'Betala med Klarna'
-          : 'Betala'}
+            ? '...'
+            : this.method === 'klarna'
+              ? this.klarnaReady
+                ? 'Slutför Klarna'
+                : 'Betala med Klarna'
+              : 'Betala'}
         </button>
+
+        <div class="safe-text">Säker betalning med kryptering</div>
 
         <div class="status ${this.status === 'success' ? 'success' : 'error'}">
           ${this.message}
         </div>
       </div>
-    `;
+    </div>
+  `;
   }
 }
 // Registrera custom elementet om det inte redan är registrerat
