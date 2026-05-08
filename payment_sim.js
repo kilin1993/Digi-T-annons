@@ -1,5 +1,8 @@
 //css utanför klassen för att hålla det rent och bara renderas en gång
 const style = `
+* {
+  box-sizing: border-box;
+}
 :host {
   display: block;
   max-width: 560px;

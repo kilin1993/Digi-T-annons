@@ -7,7 +7,7 @@ dotenv.config();
 import { adConfig } from "./ad-config.js";
 
 const app = express();
-const port = 3000;
+const port = process.env.PORT || 3000;
 
 
 // Gör det möjligt att använda __dirname i ES modules
@@ -606,6 +606,10 @@ app.post("/api/subscriptions/notify-nearby", async (req, res) => {
 app.post("/api/notification/send", async (req, res) => {
   const result = await sendNotification(req.body);
   return res.status(result.status).json(result.body);
+});
+
+app.get("/api/health", (req, res) => {
+  res.json({ status: "ok" });
 });
 
 app.listen(port, () => {

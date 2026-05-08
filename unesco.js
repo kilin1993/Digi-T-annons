@@ -223,22 +223,42 @@ function getUnescoSiteByName(name) {
   );
 }
 
-// Hämtar användarens geolocation
-function getUserLocation() {
-  return new Promise((resolve, reject) => {
-    if (!navigator.geolocation) {
-      return reject(new Error("Geolocation stöds inte i webbläsaren."));
+// Hämtar användarens geolocation med fallback lösning
+async function getUserLocation() {
+  // Försök 1: Använd navigator.geolocation
+  try {
+    if (navigator.geolocation) {
+      return await new Promise((resolve, reject) => {
+        navigator.geolocation.getCurrentPosition(
+          ({ coords }) =>
+            resolve({
+              latitude: coords.latitude,
+              longitude: coords.longitude
+            }),
+          reject,
+          { timeout: 5000 }
+        );
+      });
     }
+  } catch (error) {
+    console.warn("Geolocation misslyckades:", error);
+  }
 
-    navigator.geolocation.getCurrentPosition(
-      ({ coords }) =>
-        resolve({
-          latitude: coords.latitude,
-          longitude: coords.longitude
-        }),
-      reject
-    );
-  });
+  // Försök 2: Fallback till GeoIP API
+  try {
+    const response = await fetch('https://ipapi.co/json/');
+    if (response.ok) {
+      const data = await response.json();
+      console.log("Använder GeoIP fallback, land:", data.country_code);
+      return {
+        latitude: data.latitude,
+        longitude: data.longitude,
+        country: data.country_code
+      };
+    }
+  } catch (error) {
+    console.warn("GeoIP fallback misslyckades:", error);
+  };
 }
 
 async function activateAndOpenPayment() {
@@ -252,8 +272,13 @@ async function activateAndOpenPayment() {
         try {
           userPosition = await getUserLocation();
 
-          const { distanceKm } = findNearestSite(userPosition);
-          currentDistanceKm = distanceKm;
+          const nearestSites = findNearestSites(userPosition, 4);
+          const nearestSite = nearestSites[0];
+
+    if (nearestSite) {
+      currentDistanceKm = nearestSite.distanceKm;
+    }
+
         } catch (error) {
           console.warn("Platsåtkomst nekades eller misslyckades:", error);
         }
@@ -279,13 +304,15 @@ async function activateAndOpenPayment() {
     unescoSites = sites;
     userPosition = position;
 
-    const { site, distanceKm } = findNearestSite(userPosition);
+    const nearestSites = findNearestSites(userPosition, 4);
+    const site = nearestSites[0];
 
     if (!site) {
       return alert("Kunde inte hitta någon UNESCO-plats.");
     }
 
-    currentDistanceKm = distanceKm;
+
+    currentDistanceKm = site.distanceKm;
     currentSiteIndex = unescoSites.findIndex(s => s.id === site.id);
 
     await renderUnescoSite(site);
@@ -431,6 +458,7 @@ async function activateNearbyInfo() {
     console.error("Kunde inte hämta användarens plats:", error);
     alert("Du behöver godkänna platsåtkomst för att använda funktionen.");
   }
+
 }
 
 function renderNearbySites(sites) {
