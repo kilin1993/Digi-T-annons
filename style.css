@@ -94,7 +94,7 @@
 .ad {
     position: relative;
     overflow: hidden;
-background:
+    background:
     linear-gradient(
         90deg,
         rgba(0, 12, 20, 0.9) 0%,
@@ -176,7 +176,7 @@ background:
 }
 
 .ad-site span {
-    color: #c6f07d;
+    color: #b7d8c2;
     font-size: 13px;
     font-weight: 700;
 }
@@ -192,8 +192,8 @@ background:
 
 .ad-button {
     margin-top: 26px;
-    background: #c6f07d;
-    color: #111;
+    background: #0f5132;
+    color: white;
     border: none;
     border-radius: 999px;
     padding: 8px 18px;
@@ -202,20 +202,12 @@ background:
     line-height: 1;
     font-weight: 800;
     white-space: nowrap;
-    cursor: pointer;
     text-align: center;
 
     display: inline-flex;
     align-items: center;
     justify-content: center;
     gap: 6px;
-
-    transition: 0.2s ease;
-}
-
-.ad-button:hover {
-    transform: translateY(-1px);
-    background: #d6ff93;
 }
 
 .ad:hover,
@@ -455,9 +447,10 @@ button {
     text-align: left;
     cursor: pointer;
     transition: all 0.2s ease;
-    display: flex;
-    justify-content: space-between;
+    display: grid;
+    grid-template-columns: 1fr 80px 16px;
     align-items: center;
+    gap: 12px;
   }
   
   .nearby-site-card::after {
