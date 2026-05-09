@@ -724,14 +724,14 @@ class PaymentSimulator extends HTMLElement {
           </select>
 
         <div class="methods">
-          <label>
+         <label>
             <input type="radio" name="method" value="klarna" ${this.method === 'klarna' ? 'checked' : ''}>
-            Klarna
+            <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/9/9a/Klarna_Logo_black.svg/960px-Klarna_Logo_black.svg.png?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=thumbnail" alt="Klarna" width="40" />
           </label>
 
           <label>
             <input type="radio" name="method" value="card" ${this.method === 'card' ? 'checked' : ''}>
-            Kort
+            <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/5/5c/Visa_Inc._logo_%282021%E2%80%93present%29.svg/960px-Visa_Inc._logo_%282021%E2%80%93present%29.svg.png?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=thumbnail" alt="Visa" width="40" /><img src="https://upload.wikimedia.org/wikipedia/commons/thumb/a/a4/Mastercard_2019_logo.svg/120px-Mastercard_2019_logo.svg.png" alt="Mastercard" width="40" />
           </label>
         </div>
 
