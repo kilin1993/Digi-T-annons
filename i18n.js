@@ -26,6 +26,13 @@ export const uiTexts = {
     unescoLink: "Läs mer hos UNESCO →",
     nearbySites: "Fler världsarv i närheten",
     backToNearest: "← Tillbaka till närmaste världsarv",
+    heroTitleLine1: "Upptäck.",
+    heroTitleLine2: "Bevara.",
+    heroTitleLine3: "Få notiser.",
+    heroNoticeTitle: "SMS och/eller e-post",
+    heroNoticeSubtitle: "När du är nära ett UNESCO-världsarv.",
+    heroRealtimeTitle: "Notiser i realtid",
+    heroRealtimeSubtitle: "När du är nära ett världsarv.",
   },
 
   en: {
@@ -55,6 +62,13 @@ export const uiTexts = {
     unescoLink: "Read more at UNESCO →",
     nearbySites: "More nearby world heritage sites",
     backToNearest: "← Back to nearest world heritage site",
+    heroTitleLine1: "Discover.",
+    heroTitleLine2: "Preserve.",
+    heroTitleLine3: "Get notified.",
+    heroNoticeTitle: "SMS and/or email",
+    heroNoticeSubtitle: "When you are near a UNESCO World Heritage site.",
+    heroRealtimeTitle: "Real-time notifications",
+    heroRealtimeSubtitle: "When you are near a World Heritage site.",
   }
 };
 
