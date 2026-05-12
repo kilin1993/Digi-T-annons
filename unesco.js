@@ -664,6 +664,22 @@ function renderUiLanguage() {
   if (featureLanguage) featureLanguage.textContent = t("featureLanguage", uiLanguage);
   if (featureQuestions) featureQuestions.textContent = t("featureQuestions", uiLanguage);
   if (featureSms) featureSms.textContent = t("featureSms", uiLanguage);
+
+  const heroTitleLine1 = document.getElementById("heroTitleLine1");
+  const heroTitleLine2 = document.getElementById("heroTitleLine2");
+  const heroTitleLine3 = document.getElementById("heroTitleLine3");
+  const heroNoticeTitle = document.getElementById("heroNoticeTitle");
+  const heroNoticeSubtitle = document.getElementById("heroNoticeSubtitle");
+  const heroRealtimeTitle = document.getElementById("heroRealtimeTitle");
+  const heroRealtimeSubtitle = document.getElementById("heroRealtimeSubtitle");
+
+  if (heroTitleLine1) heroTitleLine1.textContent = t("heroTitleLine1", uiLanguage);
+  if (heroTitleLine2) heroTitleLine2.textContent = t("heroTitleLine2", uiLanguage);
+  if (heroTitleLine3) heroTitleLine3.textContent = t("heroTitleLine3", uiLanguage);
+  if (heroNoticeTitle) heroNoticeTitle.textContent = t("heroNoticeTitle", uiLanguage);
+  if (heroNoticeSubtitle) heroNoticeSubtitle.textContent = t("heroNoticeSubtitle", uiLanguage);
+  if (heroRealtimeTitle) heroRealtimeTitle.textContent = t("heroRealtimeTitle", uiLanguage);
+  if (heroRealtimeSubtitle) heroRealtimeSubtitle.textContent = t("heroRealtimeSubtitle", uiLanguage);
 }
 
 if (languageSelect) {
