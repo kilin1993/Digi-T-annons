@@ -5,6 +5,7 @@ import { sendNotification } from "./notificationService.js";
 import dotenv from "dotenv";
 dotenv.config();
 import { adConfig } from "./ad-config.js";
+import fs from "fs/promises";
 
 const app = express();
 const port = process.env.PORT || 3000;
@@ -342,7 +343,7 @@ app.post('/klarna/orders', async (req, res) => {
 });
 
 // Endpoint för att hantera betalningar
-app.post('/payments', (req, res) => {
+app.post('/payments', async (req, res) => {
   try {
     const body = req.body;
     console.log('BODY:', body);
@@ -399,12 +400,14 @@ app.post('/payments', (req, res) => {
       });
     }
 
+    const subscription = await createSubscription(email, phone);
+
     return res.json({
       status: 'success',
       message: 'Betalningen lyckades',
       plan: selectedPlan,
       paymentId: `pay_${now}`,
-      subscriptionId: `sub_${now}`,
+      subscriptionId: subscription.subscriptionId,
       plan: selectedPlan,
       paymentMethod,
       customer: paymentMethod === 'klarna' ? { email, phone } : undefined,
@@ -465,11 +468,51 @@ app.post("/api/translate", async (req, res) => {
   }
 });
 
-const subscriptions = [];
+/* const subscriptions = [];
 const sentHeritageNotifications = new Set();
 
 function createSubscriptionId() {
   return `sub_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
+} */
+
+// För att spara prenumerationer till en json fil
+const SUBSCRIPTIONS_FILE = path.join(__dirname, "subscriptions.json");
+const sentHeritageNotifications = new Set();
+
+async function readSubscriptions() {
+  try {
+    const data = await fs.readFile(SUBSCRIPTIONS_FILE, "utf8");
+    return JSON.parse(data);
+  } catch {
+    return [];
+  }
+}
+
+async function saveSubscriptions(subscriptions) {
+  await fs.writeFile(
+    SUBSCRIPTIONS_FILE,
+    JSON.stringify(subscriptions, null, 2)
+  );
+}
+
+async function createSubscription(email, phone) {
+  const subscriptions = await readSubscriptions();
+
+  const nextId =
+    subscriptions.length > 0
+      ? subscriptions[subscriptions.length - 1].subscriptionId + 1
+      : 1;
+
+  const subscription = {
+    subscriptionId: nextId,
+    email,
+    phone
+  };
+
+  subscriptions.push(subscription);
+  await saveSubscriptions(subscriptions);
+
+  return subscription;
 }
 
 app.post("/api/subscriptions", async (req, res) => {
