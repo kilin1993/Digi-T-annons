@@ -1,0 +1,17 @@
+[
+  {
+    "subscriptionId": 1,
+    "email": "test@test.se",
+    "phone": "+46701234567"
+  },
+  {
+    "subscriptionId": 2,
+    "email": "anna@test.se",
+    "phone": "+46709999999"
+  },
+  {
+    "subscriptionId": 3,
+    "email": "exempel@exempel.com",
+    "phone": "+46760951403"
+  }
+]
