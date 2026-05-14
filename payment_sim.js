@@ -680,7 +680,7 @@ class PaymentSimulator extends HTMLElement {
 
         <div class="subscription-box">
           <h3>Registrera dig</h3>
-          <p>Få SMS när du är nära ett UNESCO-världsarv. Bekräftelse skickas till din e-post.</p>
+          <p>Prenumerationen har ingen bindningstid och du kan när som helst avsluta den genom att kontakta oss via (support/mejl?)</p>
 
           <input
             class="input"
