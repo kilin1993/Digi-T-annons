@@ -15,10 +15,12 @@ export function initChatbot({
   // Textinnehåll för olika språk
   const texts = {
     sv: {
-      greeting: "Hej! Fråga mig om",
+      greeting: "Hej! Här kan du fråga mig om",
       thinking: "Tänker...",
       noSite: "Jag hittar ingen vald världsarvsplats just nu.",
       error: "Chatten kunde inte svara just nu.",
+      emptyAnswer: "Jag kan tyvärr inte svara på det just nu. Prova att fråga om platsen, landet, regionen, avståndet eller hur du prenumererar.",
+      temporaryError: "AI-tjänsten är tillfälligt upptagen. Försök igen om en stund.",
       closeTitle: "Stäng chatten",
       openTitle: "Öppna chatten",
       chatTitle: "Fråga om världsarvet",
@@ -27,10 +29,12 @@ export function initChatbot({
       submitLabel: "Skicka"
     },
     en: {
-      greeting: "Hi! Ask me about",
+      greeting: "Hi! Here you can ask me about",
       thinking: "Thinking...",
       noSite: "I can't find any selected World Heritage site right now.",
       error: "The chat couldn't respond right now.",
+      emptyAnswer: "I can't answer that right now. Try asking about the site, country, region, distance, or how to subscribe.",
+      temporaryError: "The AI service is temporarily busy. Please try again shortly.",
       closeTitle: "Close chat",
       openTitle: "Open chat",
       chatTitle: "Ask about the World Heritage site",
@@ -73,17 +77,25 @@ export function initChatbot({
         question,
         site,
         description: getCurrentDescription(),
-        distanceKm: getCurrentDistanceKm()
+        distanceKm: getCurrentDistanceKm(),
+        language
       })
     });
 
-    const data = await response.json();
+    const data = await response.json().catch(() => ({}));
 
     if (!response.ok) {
-      throw new Error(data.error || getText("error"));
+      const isTemporaryError =
+        data.code === "temporary_ai_error" ||
+        response.status === 429 ||
+        response.status === 503;
+
+      throw new Error(
+        isTemporaryError ? getText("temporaryError") : getText("error")
+      );
     }
 
-    return data.answer || getText("error");
+    return data.answer || getText("emptyAnswer");
   }
 
   // Återställ chatten när en ny plats väljs
@@ -116,7 +128,7 @@ export function initChatbot({
 
   // Byt språk och uppdatera UI
   function setLanguage(newLanguage) {
-    language = newLanguage;
+    language = texts[newLanguage] ? newLanguage : "sv";
     updateUiText();
   }
 
@@ -158,7 +170,7 @@ export function initChatbot({
 
     try {
       const answer = await askAi(question);
-      chatMessages.lastElementChild.textContent = answer;
+      chatMessages.lastElementChild.textContent = answer || getText("emptyAnswer");
     } catch (error) {
       console.error("Chat error:", error);
       chatMessages.lastElementChild.textContent =
