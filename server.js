@@ -172,7 +172,7 @@ async function generateGeminiAnswer({ prompt, model }) {
 
 app.post("/api/chat", async (req, res) => {
   try {
-    const { question, site, description, distanceKm } = req.body;
+    const { question, site, description, distanceKm, language } = req.body;
 
     if (!question || !site) {
       return res.status(400).json({
@@ -200,12 +200,14 @@ app.post("/api/chat", async (req, res) => {
       .map((model) => model.trim())
       .filter(Boolean);
     const models = [...new Set([preferredModel, ...fallbackModels])];
+    const answerLanguage = language === "en" ? "English" : "Swedish";
     const prompt =
-      "Du är en hjälpsam svensk chatbot för en UNESCO världsarvsannons. " +
-      "Svara kort, tydligt och bara utifrån den världsarvsdata du får. " +
-      "Om frågan inte går att besvara från datan, säg det och föreslå en fråga om plats, land, region, beskrivning eller avstånd.\n\n" +
-      `Världsarvsdata:\n${JSON.stringify(siteContext, null, 2)}\n\n` +
-      `Fråga från användaren: ${question}`;
+      `You are a helpful chatbot for a UNESCO World Heritage ad. Answer in ${answerLanguage}. ` +
+      "Keep the answer short and clear. Only use the World Heritage data you receive. " +
+      "If the user asks how to subscribe, answer that they should press the Subscribe button, fill in email and mobile number, then enter card details or use Klarna. Inform the user that there is no commitment period and that they can cancel at any time." +
+      "If the question cannot be answered from the data, say that and suggest asking about location, country, region, description, or distance.\n\n" +
+      `World Heritage data:\n${JSON.stringify(siteContext, null, 2)}\n\n` +
+      `User question: ${question}`;
 
     let lastError = null;
 
@@ -229,13 +231,14 @@ app.post("/api/chat", async (req, res) => {
       lastError?.status === 429 || lastError?.status === 503;
 
     res.status(lastError?.status || 500).json({
+      code: isTemporaryGeminiError ? "temporary_ai_error" : "ai_error",
       error: isTemporaryGeminiError
         ? "Gemini är tillfälligt överbelastat. Försök igen om en stund."
         : lastError?.message || "Gemini-anropet misslyckades."
     });
   } catch (error) {
     console.error("Chat error:", error);
-    res.status(500).json({ error: error.message });
+    res.status(500).json({ code: "server_error", error: error.message });
   }
 });
 
