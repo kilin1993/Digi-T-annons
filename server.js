@@ -30,7 +30,6 @@ const KLARNA_PASSWORD = process.env.KLARNA_PASSWORD || '';
 
 // Serverar filer direkt från projektets rotmapp
 app.use(express.static(__dirname));
-app.use(express.json());
 
 // hantering av CORS och JSON-body parsing
 app.use(express.json());
@@ -84,16 +83,37 @@ function mapUnescoRecord(site) {
   };
 }
 
+let cachedSites = null;
+let cacheTimestamp = 0;
+
+//Data från Unesco API hämtas varje 24h, cachas på servern där emellan
+//för att öka prestanda och onödiga anrop
+const CACHE_DURATION = 24 * 60 * 60 * 1000; // 24 timmar
+
 // Egen endpoint som frontend och andra komponenter kan använda
 app.get("/api/unesco/sites", async (req, res) => {
   try {
+
+    // Om cache finns och är giltig → använd den
+    if (
+      cachedSites &&
+      Date.now() - cacheTimestamp < CACHE_DURATION
+    ) {
+      console.log("Serving UNESCO sites from cache");
+      return res.json(cachedSites);
+    }
+
+    console.log("Fetching UNESCO sites from UNESCO API");
+
     const allSites = [];
     const limit = 100;
     let offset = 0;
     let keepFetching = true;
 
     while (keepFetching) {
-      const url = `https://data.unesco.org/api/explore/v2.1/catalog/datasets/whc001/records?limit=${limit}&offset=${offset}&lang=en`;
+
+      const url =
+        `https://data.unesco.org/api/explore/v2.1/catalog/datasets/whc001/records?limit=${limit}&offset=${offset}&lang=en`;
 
       const response = await fetch(url, {
         headers: {
@@ -110,6 +130,7 @@ app.get("/api/unesco/sites", async (req, res) => {
       const results = data.results || [];
 
       const mappedSites = results.map(mapUnescoRecord);
+
       allSites.push(...mappedSites);
 
       if (results.length < limit) {
@@ -119,9 +140,17 @@ app.get("/api/unesco/sites", async (req, res) => {
       }
     }
 
+    // Spara cache
+    cachedSites = allSites;
+    cacheTimestamp = Date.now();
+
+    console.log(`Cached ${allSites.length} UNESCO sites`);
+
     res.json(allSites);
+
   } catch (error) {
     console.error("Error fetching UNESCO data:", error);
+
     res.status(500).json({
       error: "Could not fetch UNESCO data"
     });
