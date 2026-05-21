@@ -6,6 +6,7 @@ import dotenv from "dotenv";
 dotenv.config();
 import { adConfig } from "./ad-config.js";
 import fs from "fs/promises";
+import { uiTexts } from "./i18n.js";
 
 const app = express();
 const port = process.env.PORT || 3000;
@@ -549,7 +550,9 @@ async function createSubscription(email, phone) {
 
 app.post("/api/subscriptions", async (req, res) => {
   try {
-    const { email, phone, notificationType } = req.body;
+    const { email, phone, notificationType, language } = req.body;
+    const messageLanguage = language === "en" ? "en" : "sv";
+    const texts = uiTexts[messageLanguage];
 
     if (!email || !phone || !notificationType) {
       return res.status(400).json({
@@ -572,8 +575,8 @@ app.post("/api/subscriptions", async (req, res) => {
     await sendNotification({
       channel: "email",
       to: email,
-      subject: "Bekräftelse på prenumeration",
-      message: `Du har registrerat dig för notiser om UNESCO-världsarv. Vald notistyp: ${notificationType}.`,
+      subject: texts.subscriptionConfirmationSubject,
+      message: texts.subscriptionConfirmationMessage,
       user_id: subscription.id,
       site_id: "subscription-confirmation"
     });

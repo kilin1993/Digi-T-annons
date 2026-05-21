@@ -33,6 +33,8 @@ export const uiTexts = {
     heroNoticeSubtitle: "När du är nära ett UNESCO-världsarv.",
     heroRealtimeTitle: "Notiser i realtid",
     heroRealtimeSubtitle: "När du är nära ett världsarv.",
+    subscriptionConfirmationSubject: "Bekräftelse på prenumeration",
+    subscriptionConfirmationMessage: "Du har registrerat dig för notiser om UNESCO-världsarv.",
   },
 
   en: {
@@ -69,6 +71,8 @@ export const uiTexts = {
     heroNoticeSubtitle: "When you are near a UNESCO World Heritage site.",
     heroRealtimeTitle: "Real-time notifications",
     heroRealtimeSubtitle: "When you are near a World Heritage site.",
+    subscriptionConfirmationSubject: "Subscription confirmation",
+    subscriptionConfirmationMessage: "You have registered for UNESCO World Heritage notifications.",
   }
 };
 
