@@ -433,14 +433,14 @@ app.post('/payments', async (req, res) => {
       });
     }
 
-    const subscription = await createSubscription(email, phone);
+    
 
     return res.json({
       status: 'success',
       message: 'Betalningen lyckades',
       plan: selectedPlan,
       paymentId: `pay_${now}`,
-      subscriptionId: subscription.subscriptionId,
+      subscriptionId: `sub_${now}`,
       plan: selectedPlan,
       paymentMethod,
       customer: paymentMethod === 'klarna' ? { email, phone } : undefined,
@@ -528,25 +528,6 @@ async function saveSubscriptions(subscriptions) {
   );
 }
 
-async function createSubscription(email, phone) {
-  const subscriptions = await readSubscriptions();
-
-  const nextId =
-    subscriptions.length > 0
-      ? subscriptions[subscriptions.length - 1].subscriptionId + 1
-      : 1;
-
-  const subscription = {
-    subscriptionId: nextId,
-    email,
-    phone
-  };
-
-  subscriptions.push(subscription);
-  await saveSubscriptions(subscriptions);
-
-  return subscription;
-}
 
 app.post("/api/subscriptions", async (req, res) => {
   try {
@@ -561,23 +542,32 @@ app.post("/api/subscriptions", async (req, res) => {
       });
     }
 
+    const subscriptions = await readSubscriptions();
+
+    const nextId =
+      subscriptions.length > 0
+        ? Math.max(...subscriptions.map((sub) => Number(sub.subscriptionId) || 0)) + 1
+        : 1;
+
     const subscription = {
-      id: createSubscriptionId(),
+      subscriptionId: nextId,
       email,
       phone,
       notificationType,
       active: true,
+      sentSiteIds: [],
       created_at: new Date().toISOString()
     };
 
     subscriptions.push(subscription);
+    await saveSubscriptions(subscriptions);
 
     await sendNotification({
       channel: "email",
       to: email,
       subject: texts.subscriptionConfirmationSubject,
       message: texts.subscriptionConfirmationMessage,
-      user_id: subscription.id,
+      user_id: subscription.subscriptionId,
       site_id: "subscription-confirmation"
     });
 
@@ -594,32 +584,49 @@ app.post("/api/subscriptions", async (req, res) => {
   }
 });
 
-app.post("/api/subscriptions/cancel", (req, res) => {
-  const { subscriptionId } = req.body;
+app.post("/api/subscriptions/cancel", async (req, res) => {
+  try {
+    const { subscriptionId } = req.body;
 
-  const subscription = subscriptions.find((sub) => sub.id === subscriptionId);
+    const subscriptions = await readSubscriptions();
 
-  if (!subscription) {
-    return res.status(404).json({
+    const subscription = subscriptions.find(
+      (sub) => String(sub.subscriptionId) === String(subscriptionId)
+    );
+
+    if (!subscription) {
+      return res.status(404).json({
+        success: false,
+        error: "not_found"
+      });
+    }
+
+    subscription.active = false;
+    await saveSubscriptions(subscriptions);
+
+    return res.json({
+      success: true,
+      subscription
+    });
+  } catch (error) {
+    console.error("Cancel subscription error:", error);
+    return res.status(500).json({
       success: false,
-      error: "not_found"
+      error: "server_error"
     });
   }
-
-  subscription.active = false;
-
-  return res.json({
-    success: true,
-    subscription
-  });
 });
 
 app.post("/api/subscriptions/notify-nearby", async (req, res) => {
   try {
     const { subscriptionId, site } = req.body;
 
+    const subscriptions = await readSubscriptions();
+
     const subscription = subscriptions.find(
-      (sub) => sub.id === subscriptionId && sub.active
+      (sub) =>
+        String(sub.subscriptionId) === String(subscriptionId) &&
+        sub.active
     );
 
     if (!subscription) {
@@ -636,9 +643,11 @@ app.post("/api/subscriptions/notify-nearby", async (req, res) => {
       });
     }
 
-    const key = `${subscription.id}:${site.id}`;
+    if (!Array.isArray(subscription.sentSiteIds)) {
+      subscription.sentSiteIds = [];
+    }
 
-    if (sentHeritageNotifications.has(key)) {
+    if (subscription.sentSiteIds.includes(site.id)) {
       return res.json({
         success: true,
         skipped: true,
@@ -651,7 +660,7 @@ app.post("/api/subscriptions/notify-nearby", async (req, res) => {
         channel: "sms",
         to: subscription.phone,
         message: `Hej! Du är nära världsarvet ${site.name}. Läs mer här: ${site.url || ""}`,
-        user_id: subscription.id,
+        user_id: subscription.subscriptionId,
         site_id: site.id
       });
     }
@@ -662,12 +671,13 @@ app.post("/api/subscriptions/notify-nearby", async (req, res) => {
         to: subscription.email,
         subject: `Du är nära ${site.name}`,
         message: `Hej! Du är nära världsarvet ${site.name}. Läs mer här: ${site.url || ""}`,
-        user_id: subscription.id,
+        user_id: subscription.subscriptionId,
         site_id: site.id
       });
     }
 
-    sentHeritageNotifications.add(key);
+    subscription.sentSiteIds.push(site.id);
+    await saveSubscriptions(subscriptions);
 
     return res.json({
       success: true

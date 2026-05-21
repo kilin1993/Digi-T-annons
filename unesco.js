@@ -588,7 +588,7 @@ async function notifyNearbyHeritage(site) {
       "Content-Type": "application/json"
     },
     body: JSON.stringify({
-      subscriptionId: activeSubscription.id,
+      subscriptionId: activeSubscription.subscriptionId,
       site: {
         id: site.id,
         name: site.name,

@@ -19,36 +19,6 @@ const style = `
   background: #fff;
   box-shadow: 0 12px 35px rgba(0,0,0,0.08);
 }
-
-.stepper {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  margin-bottom: 24px;
-  color: #777;
-  font-size: 0.82rem;
-  white-space: nowrap;
-}
-
-.step {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-}
-
-.step-number {
-  flex: 0 0 24px;
-  width: 24px;
-  height: 24px;
-  border-radius: 50%;
-  background: #e7eee9;
-  color: #12352f;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  font-weight: bold;
-}
-// Tar bort denna tillfälligt eftersom att steppern inte uppdateras
 /* .step.active .step-number {
   background: #0f5132;
   color: white;
@@ -67,23 +37,6 @@ const style = `
   margin-top: 18px;
 }
 
-.subscription-box {
-  border: 1px solid #e2e8e4;
-  border-radius: 16px;
-  padding: 18px;
-  background: #fbfdfb;
-}
-
-.subscription-box h3 {
-  margin: 0 0 6px;
-  font-size: 1.05rem;
-}
-
-.subscription-box p {
-  margin: 0 0 14px;
-  font-size: 0.9rem;
-  color: #555;
-}
 
 .input,
 .select {
@@ -105,7 +58,6 @@ const style = `
   box-shadow: 0 0 0 3px rgba(15,81,50,0.12);
 }
 
-.notice-options,
 .methods {
   display: flex;
   gap: 10px;
@@ -113,7 +65,7 @@ const style = `
   margin: 12px 0;
 }
 
-.notice-options label,
+
 .methods label {
   border: 1px solid #d7ddd9;
   border-radius: 12px;
@@ -203,11 +155,14 @@ class PaymentSimulator extends HTMLElement {
     this.status = 'idle';
     this.message = '';
 
+    
+    this.subscription = {
+      email: "",
+      phone: "",
+      notificationType: "sms"
+    };
     // formdata för betalning
     this.form = {
-      email: '',
-      phone: '',
-      notificationType: 'sms',
       cardName: '',
       cardNumber: '',
       expiry: '',
@@ -269,7 +224,16 @@ class PaymentSimulator extends HTMLElement {
   bind() {
     const plan = this.shadowRoot.querySelector('#plan');
     const pay = this.shadowRoot.querySelector('#pay');
+    // Prenumerationskomponenten
+    const subscriptionForm = this.shadowRoot.querySelector("subscription-form");
 
+    if (subscriptionForm) {
+      subscriptionForm.setData(this.subscription);
+    
+      subscriptionForm.addEventListener("subscription-change", (event) => {
+        this.subscription = event.detail;
+      });
+    }
     // När en plan väljs, uppdatera selectedPlan
     if (plan) {
       plan.onchange = (e) => {
@@ -289,27 +253,17 @@ class PaymentSimulator extends HTMLElement {
     });
 
     // Hämta inputfält för kund- och kortinformation
-    const email = this.shadowRoot.querySelector('#email');
-    const phone = this.shadowRoot.querySelector('#phone');
     const cardName = this.shadowRoot.querySelector('#cardName');
     const cardNumber = this.shadowRoot.querySelector('#cardNumber');
     const expiry = this.shadowRoot.querySelector('#expiry');
     const cvc = this.shadowRoot.querySelector('#cvc');
-    const notificationType = this.shadowRoot.querySelector('#notificationType');
 
     // Binda inputhändelser för att uppdatera formdata
-    if (email) email.oninput = (e) => (this.form.email = e.target.value);
-    if (phone) phone.oninput = (e) => (this.form.phone = e.target.value);
     if (cardName) cardName.oninput = (e) => (this.form.cardName = e.target.value);
     if (cardNumber) cardNumber.oninput = (e) => (this.form.cardNumber = e.target.value);
     if (expiry) expiry.oninput = (e) => (this.form.expiry = e.target.value);
     if (cvc) cvc.oninput = (e) => (this.form.cvc = e.target.value);
 
-    this.shadowRoot.querySelectorAll('[name="notificationType"]').forEach((el) => {
-      el.onchange = (e) => {
-        this.form.notificationType = e.target.value;
-      };
-    });
 
     // När "Betala" knappen klickas, starta betalningsprocessen
     if (pay) {
@@ -323,20 +277,10 @@ class PaymentSimulator extends HTMLElement {
       return 'Välj en plan';
     }
 
-    if (!this.form.email.trim()) {
-      return 'Fyll i e-post';
-    }
+    const subscriptionForm = this.shadowRoot.querySelector("subscription-form");
 
-    if (!this.form.phone.trim()) {
-      return 'Fyll i telefonnummer';
-    }
-
-    if (!/^\+46\d{9}$/.test(this.form.phone.trim())) {
-      return 'Telefonnummer måste ha formatet +46701234567';
-    }
-
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(this.form.email.trim())) {
-      return 'Fyll i en giltig e-postadress';
+    if (!subscriptionForm || !subscriptionForm.isValid()) {
+      return "Fyll i prenumerationsuppgifterna";
     }
 
     if (this.method === 'card') {
@@ -370,7 +314,17 @@ class PaymentSimulator extends HTMLElement {
       this.bind();
       return;
     }
+    const subscriptionForm = this.shadowRoot.querySelector("subscription-form");
 
+    if (subscriptionForm) {
+      this.subscription = subscriptionForm.getData();
+    }
+    if (this.method === 'klarna' && this.klarnaReady) {
+      await this.authorizeKlarnaPayment();
+      this.render();
+      this.bind();
+      return;
+    }
     // Status medan betalningen hanteras
     this.status = 'processing';
     this.message = this.method === 'klarna' ? 'Förbereder Klarna...' : 'Bearbetar...';
@@ -413,14 +367,15 @@ class PaymentSimulator extends HTMLElement {
   // Funktion för att hantera Klarna betalning
   async handleKlarnaPayment() {
     try {
+      console.log("Klarna customer:", this.subscription);
       const response = await fetch(`${this.baseUrl}/klarna/sessions`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           planId: this.selectedPlan,
           customer: {
-            email: this.form.email,
-            phone: this.form.phone
+            email: this.subscription.email,
+            phone: this.subscription.phone
           }
         })
       });
@@ -504,15 +459,14 @@ class PaymentSimulator extends HTMLElement {
 
     this.status = 'processing';
     this.message = 'Auktoriserar Klarna betalning...';
-    this.render();
 
     return new Promise((resolve, reject) => {
       window.Klarna.Payments.authorize(
         {},
         {
           billing_address: {
-            email: this.form.email,
-            phone: this.form.phone,
+            email: this.subscription.email,
+            phone: this.subscription.phone,
             country: 'SE',
             given_name: 'Test',
             family_name: 'Kund',
@@ -538,17 +492,20 @@ class PaymentSimulator extends HTMLElement {
                 throw new Error(orderData.message || 'Kunde inte skapa order');
               }
 
+              const customerData = { ...this.subscription };
+
               this.status = 'success';
               this.message = 'Betalningen är godkänd!';
+              this.subscription = {
+                email: "",
+                phone: "",
+                notificationType: "sms"
+              };
               this.dispatchEvent(new CustomEvent('payment-success', {
                 detail: {
                   order_id: orderData.order_id,
                   method: 'klarna',
-                  customer: {
-                    email: this.form.email,
-                    phone: this.form.phone,
-                    notificationType: this.form.notificationType
-                  }
+                  customer: customerData
                 },
                 bubbles: true,
                 composed: true
@@ -587,8 +544,8 @@ class PaymentSimulator extends HTMLElement {
           plan: this.selectedPlan,
           method: this.method,
           customer: {
-            email: this.form.email,
-            phone: this.form.phone
+            email: this.subscription.email,
+            phone: this.subscription.phone
           },
           card: {
             cardName: this.form.cardName,
@@ -618,15 +575,21 @@ class PaymentSimulator extends HTMLElement {
     this.status = result.status || 'failed';
     this.message = result.message || 'Något gick fel';
 
+    const customerData = { ...this.subscription };
+
+    if (this.status === 'success') {
+      this.subscription = {
+        email: "",
+        phone: "",
+        notificationType: "sms"
+      };
+    }
+
     const eventName = this.status === 'success' ? 'payment-success' : 'payment-failed';
     this.dispatchEvent(new CustomEvent(eventName, {
       detail: {
         ...result,
-        customer: {
-          email: this.form.email,
-          phone: this.form.phone,
-          notificationType: this.form.notificationType
-        }
+        customer: customerData
       },
       bubbles: true,
       composed: true
@@ -669,62 +632,7 @@ class PaymentSimulator extends HTMLElement {
 
       <div class="card">
 
-        <div class="stepper">
-          <div class="step active">
-            <span class="step-number">1</span>
-            <span>Prenumerera</span>
-          </div>
-          <span>—</span>
-          <div class="step">
-            <span class="step-number">2</span>
-            <span>Betala</span>
-          </div>
-          <span>—</span>
-          <div class="step">
-            <span class="step-number">3</span>
-            <span>Klart</span>
-          </div>
-        </div>
-
-        <h2 class="title">1. Prenumeration</h2>
-
-        <div class="subscription-box">
-          <h3>Registrera dig</h3>
-          <p>Ingen bindningstid. Avsluta genom att kontakta oss via (support/mejl?)</p>
-
-          <input
-            class="input"
-            id="email"
-            type="email"
-            placeholder="Din e-postadress"
-            value="${this.form.email}"
-          >
-
-          <input
-            class="input"
-            id="phone"
-            type="tel"
-            placeholder="Ditt mobilnummer, t.ex. +46701234567"
-            value="${this.form.phone}"
-          >
-
-          <div class="notice-options">
-            <label>
-              <input type="radio" name="notificationType" value="sms" ${this.form.notificationType === 'sms' ? 'checked' : ''}>
-              SMS
-            </label>
-
-            <label>
-              <input type="radio" name="notificationType" value="email" ${this.form.notificationType === 'email' ? 'checked' : ''}>
-              E-post
-            </label>
-
-            <label>
-              <input type="radio" name="notificationType" value="both" ${this.form.notificationType === 'both' ? 'checked' : ''}>
-              SMS & E-post
-            </label>
-          </div>
-        </div>
+        <subscription-form></subscription-form>
 
         <div class="section">
           <h2 class="title">2. Betalning</h2>
@@ -765,8 +673,7 @@ class PaymentSimulator extends HTMLElement {
           ${this.message}
         </div>
       </div>
-    </div>
-  `;
+    `;
   }
 }
 // Registrera custom elementet om det inte redan är registrerat
