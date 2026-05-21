@@ -1,3 +1,5 @@
+import { t } from "./i18n.js";
+
 //css utanför klassen för att hålla det rent och bara renderas en gång
 const style = `
 * {
@@ -21,21 +23,23 @@ const style = `
 .stepper {
   display: flex;
   align-items: center;
-  gap: 14px;
+  gap: 8px;
   margin-bottom: 24px;
   color: #777;
-  font-size: 0.9rem;
+  font-size: 0.82rem;
+  white-space: nowrap;
 }
 
 .step {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 6px;
 }
 
 .step-number {
-  width: 28px;
-  height: 28px;
+  flex: 0 0 24px;
+  width: 24px;
+  height: 24px;
   border-radius: 50%;
   background: #e7eee9;
   color: #12352f;
@@ -44,11 +48,11 @@ const style = `
   justify-content: center;
   font-weight: bold;
 }
-
-.step.active .step-number {
+// Tar bort denna tillfälligt eftersom att steppern inte uppdateras
+/* .step.active .step-number {
   background: #0f5132;
   color: white;
-}
+} */
 
 .title {
   font-size: 1.35rem;
@@ -180,6 +184,12 @@ class PaymentSimulator extends HTMLElement {
     // Anropa super() för att initiera HTMLElement
     super();
     this.attachShadow({ mode: 'open' });
+
+    //Språk
+    this.language =
+      document.documentElement.lang?.slice(0, 2).toLowerCase() === "en"
+        ? "en"
+        : "sv";
 
     // ger planer för demo-läge
     this.plans = [
@@ -667,7 +677,7 @@ class PaymentSimulator extends HTMLElement {
           <span>—</span>
           <div class="step">
             <span class="step-number">2</span>
-            <span>Betalning</span>
+            <span>Betala</span>
           </div>
           <span>—</span>
           <div class="step">

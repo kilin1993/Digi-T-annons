@@ -35,6 +35,16 @@ export const uiTexts = {
     heroRealtimeSubtitle: "När du är nära ett världsarv.",
     subscriptionConfirmationSubject: "Bekräftelse på prenumeration",
     subscriptionConfirmationMessage: "Du har registrerat dig för notiser om UNESCO-världsarv.",
+    securePayment: "Säker betalning med kryptering",
+    payWithKlarna: "Betala med Klarna",
+    completeKlarna: "Slutför Klarna",
+    preparingKlarna: "Förbereder Klarna...",
+    klarnaLoading: "Klarna laddas, klicka igen när det är klart.",
+    klarnaReady: "Klarna är redo. Klicka knappen igen för att slutföra betalningen.",
+    authorizingKlarna: "Auktoriserar Klarna betalning...",
+    paymentApproved: "Betalningen är godkänd!",
+    paymentError: "Något gick fel",
+    choosePlan: "Välj en plan",
   },
 
   en: {
@@ -73,6 +83,16 @@ export const uiTexts = {
     heroRealtimeSubtitle: "When you are near a World Heritage site.",
     subscriptionConfirmationSubject: "Subscription confirmation",
     subscriptionConfirmationMessage: "You have registered for UNESCO World Heritage notifications.",
+    securePayment: "Secure payment with encryption",
+    payWithKlarna: "Pay with Klarna",
+    completeKlarna: "Complete Klarna",
+    preparingKlarna: "Preparing Klarna...",
+    klarnaLoading: "Klarna is loading, click again when it is ready.",
+    klarnaReady: "Klarna is ready. Click the button again to complete the payment.",
+    authorizingKlarna: "Authorizing Klarna payment...",
+    paymentApproved: "Payment approved!",
+    paymentError: "Something went wrong",
+    choosePlan: "Choose a plan",
   }
 };
 
