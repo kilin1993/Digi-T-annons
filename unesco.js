@@ -298,7 +298,6 @@ async function activateAndOpenPayment() {
     const [sites, position] = await Promise.all([
       unescoSites.length ? Promise.resolve(unescoSites) : loadUnescoSites(),
       getUserLocation(),
-      delay(700)
     ]);
 
     unescoSites = sites;
@@ -351,7 +350,6 @@ async function translateCurrentSite(language) {
   try {
     const [translatedText] = await Promise.all([
       translateText(originalDescription, language),
-      delay(700)
     ]);
 
     currentFullDescription = translatedText;
@@ -427,7 +425,6 @@ async function activateNearbyInfo() {
     const [sites, position] = await Promise.all([
       unescoSites.length ? Promise.resolve(unescoSites) : loadUnescoSites(),
       getUserLocation(),
-      delay(700)
     ]);
 
     unescoSites = sites;
@@ -631,8 +628,7 @@ if (toggleDescriptionBtn) {
 if (adCard) {
   adCard.addEventListener("click", activateNearbyInfo);
 }
-
-window.addEventListener("load", initUnescoComponent);
+// window.addEventListener("load", initUnescoComponent);
 
 function renderUiLanguage() {
   const kicker = document.querySelector(".popup-kicker");
