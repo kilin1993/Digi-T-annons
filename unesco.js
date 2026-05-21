@@ -519,7 +519,10 @@ async function createSubscriptionAfterPayment(customer) {
     headers: {
       "Content-Type": "application/json"
     },
-    body: JSON.stringify(customer)
+    body: JSON.stringify({
+      ...customer,
+      language: uiLanguage
+    })
   });
 
   const data = await response.json();
