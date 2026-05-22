@@ -1,4 +1,4 @@
-export const adConfig = {
+window.UNESCO_AD_CONFIG = {
   pricing: {
     monthly: {
       id: "monthly",
