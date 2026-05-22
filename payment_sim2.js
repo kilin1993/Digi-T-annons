@@ -145,12 +145,12 @@ class PaymentSimulator extends HTMLElement {
 
     // ger planer för demo-läge
     this.plans = [
-      { id: 'onetime', nameKey: 'monthly', amount: 49, currency: 'SEK' },
-      { id: 'subscription', nameKey: 'yearly', amount: 549, currency: 'SEK' }
+      { id: 'onetime', name: 'Månatlig', amount: 49, currency: 'SEK' },
+      { id: 'subscription', name: 'Årlig', amount: 549, currency: 'SEK' }
     ];
 
     // standardval för plan och betalningsmetod
-    this.selectedPlan = 'monthly';
+    this.selectedPlan = 'onetime';
     this.method = 'card';
     this.status = 'idle';
     this.message = '';
@@ -280,24 +280,24 @@ class PaymentSimulator extends HTMLElement {
     const subscriptionForm = this.shadowRoot.querySelector("subscription-form");
 
     if (!subscriptionForm || !subscriptionForm.isValid()) {
-      return t("subscriptionDetailsRequired", this.language);
+      return "Fyll i prenumerationsuppgifterna";
     }
 
     if (this.method === 'card') {
       if (!this.form.cardName.trim()) {
-        return t("cardHolderRequired", this.language);
+        return 'Fyll i kortinnehavarens namn';
       }
 
       if (!this.form.cardNumber.trim()) {
-        return t("cardNumberRequired", this.language);
+        return 'Fyll i kortnummer';
       }
 
       if (!this.form.expiry.trim()) {
-        return t("expiryRequired", this.language);
+        return 'Fyll i utgångsdatum';
       }
 
       if (!this.form.cvc.trim()) {
-        return t("cvcRequired", this.language);
+        return 'Fyll i CVC';
       }
     }
 
@@ -578,7 +578,7 @@ class PaymentSimulator extends HTMLElement {
       }
 
       if (!res.ok) {
-        throw new Error(t("paymentFailed", this.language));
+        throw new Error(result.message || t("paymentFailed", this.language));
       }
     } else {
       await new Promise((r) => setTimeout(r, 800));
@@ -614,39 +614,34 @@ class PaymentSimulator extends HTMLElement {
   }
 
   // Funktion för att rendera extra fält baserat på vald betalningsmetod
-renderFields() {
-  if (this.method === 'klarna') {
-    return `
-      ${this.klarnaSession ? `
-        <div id="klarna-container" style="margin-top: 16px;"></div>
-      ` : ''}
-    `;
-  }
+  renderFields() {
+    if (this.method === 'klarna') {
+      return `
+        ${this.klarnaSession ? `
+          <div id="klarna-container" style="margin-top: 16px;"></div>
+        ` : ''}
+      `;
+    }
 
-  if (this.method === 'card') {
-    return `
-      <input class="input" id="cardName" placeholder="${t("cardHolderName", this.language)}" value="${this.form.cardName}">
-      <input class="input" id="cardNumber" placeholder="1234 1234 1234 1234" value="${this.form.cardNumber}">
-      <div class="card-row">
-        <input class="input" id="expiry" placeholder="${t("expiry", this.language)}" value="${this.form.expiry}">
-        <input class="input" id="cvc" placeholder="CVC" value="${this.form.cvc}">
-      </div>
-    `;
-  }
+    if (this.method === 'card') {
+      return `
+        <input class="input" id="cardName" placeholder="Kortinnehavarens namn" value="${this.form.cardName}">
+        <input class="input" id="cardNumber" placeholder="1234 1234 1234 1234" value="${this.form.cardNumber}">
+        <div class="card-row">
+          <input class="input" id="expiry" placeholder="MM/ÅÅ" value="${this.form.expiry}">
+          <input class="input" id="cvc" placeholder="CVC" value="${this.form.cvc}">
+        </div>
+      `;
+    }
 
-  return '';
-}
+    return '';
+  }
 
   // Funktion för att rendera hela komponenten
   render() {
-    this.language =
-      document.documentElement.lang?.slice(0, 2).toLowerCase() === "en"
-        ? "en"
-        : "sv";
-
     const options = this.plans.map((p) => `
       <option value="${p.id}" ${this.selectedPlan === p.id ? 'selected' : ''}>
-        ${t(p.nameKey, this.language)} - ${p.amount} ${p.currency}
+        ${p.name} - ${p.amount} ${p.currency}
       </option>
     `).join('');
 
