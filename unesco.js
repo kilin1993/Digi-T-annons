@@ -688,10 +688,19 @@ if (languageSelect) {
 
     uiLanguage = selectedLanguage === "en" ? "en" : "sv";
 
+    document.documentElement.lang = uiLanguage;
+
     renderUiLanguage();
 
+    const paymentSimulator = document.querySelector("payment-simulator");
+
+    if (paymentSimulator) {
+      paymentSimulator.render();
+      paymentSimulator.bind();
+    }
+
     if (currentNearbySites.length) {
-    renderNearbySites(currentNearbySites);
+      renderNearbySites(currentNearbySites);
     }
 
     await translateCurrentSite(selectedLanguage);
