@@ -37,9 +37,14 @@ export const uiTexts = {
     heroRealtimeTitle: "Notiser i realtid",
     heroRealtimeSubtitle: "När du är nära ett världsarv.",
 
-    //SMS-utskick
+    //SMS och mejl-utskick
     subscriptionConfirmationSubject: "Bekräftelse på prenumeration",
     subscriptionConfirmationMessage: "Du har registrerat dig för notiser om UNESCO-världsarv.",
+    unsubscribeText: "Avsluta prenumerationen här:",
+    nearbyNotificationSubject: "Du är nära",
+    nearbyNotificationMessage: "Hej! Du är nära världsarvet",
+    readMoreHere: "Läs mer här:",
+    unsubscribeContact: "För att avsluta prenumerationen, kontakta oss på: digitkonsult@gmail.com",
 
     //Mail-utskick
 
@@ -121,9 +126,14 @@ export const uiTexts = {
     heroRealtimeTitle: "Real-time notifications",
     heroRealtimeSubtitle: "When you are near a World Heritage site.",
 
-    //SMS-utskick
+    //SMS och mejl-utskick
     subscriptionConfirmationSubject: "Subscription confirmation",
     subscriptionConfirmationMessage: "You have registered for UNESCO World Heritage notifications.",
+    unsubscribeText: "Unsubscribe here:",
+    nearbyNotificationSubject: "You are near",
+    nearbyNotificationMessage: "Hello! You are near the World Heritage site",
+    readMoreHere: "Read more here:",
+    unsubscribeContact: "To unsubscribe, contact us at: digitkonsult@gmail.com",
 
     //Mail-utskick
     
