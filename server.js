@@ -41,6 +41,18 @@ const KLARNA_BASE_URL = process.env.KLARNA_BASE_URL || 'https://api.playground.k
 const KLARNA_USERNAME = process.env.KLARNA_USERNAME || '';
 const KLARNA_PASSWORD = process.env.KLARNA_PASSWORD || '';
 
+app.use((req, res, next) => {
+  res.setHeader("Access-Control-Allow-Origin", process.env.CORS_ORIGIN || "*");
+  res.setHeader("Access-Control-Allow-Methods", "GET,POST,OPTIONS");
+  res.setHeader("Access-Control-Allow-Headers", "Content-Type,Authorization");
+
+  if (req.method === "OPTIONS") {
+    return res.sendStatus(204);
+  }
+
+  next();
+});
+
 // Serverar filer direkt från projektets rotmapp
 app.use(express.static(__dirname));
 
@@ -77,6 +89,15 @@ async function klarnaApiRequest(endpoint, method = 'POST', body = null) {
 function getKlarnaMerchantUrl(req, path) {
   const baseUrl = process.env.KLARNA_MERCHANT_URL_BASE || `https://${req.get('host')}`;
   return `${baseUrl.replace(/\/$/, '')}${path}`;
+}
+
+function getPublicBaseUrl(req) {
+  const configuredBaseUrl = process.env.PUBLIC_BASE_URL || process.env.KLARNA_MERCHANT_URL_BASE;
+  if (configuredBaseUrl) {
+    return configuredBaseUrl.replace(/\/$/, "");
+  }
+
+  return `${req.protocol}://${req.get("host")}`;
 }
 
 // Gör om UNESCO:s rådata till ett enklare format
@@ -533,7 +554,8 @@ const sentHeritageNotifications = new Set();
 async function readSubscriptions() {
   try {
     const data = await fs.readFile(SUBSCRIPTIONS_FILE, "utf8");
-    return JSON.parse(data);
+    const subscriptions = JSON.parse(data);
+    return Array.isArray(subscriptions) ? subscriptions : [];
   } catch {
     return [];
   }
@@ -580,6 +602,8 @@ app.post("/api/subscriptions", async (req, res) => {
     subscriptions.push(subscription);
     await saveSubscriptions(subscriptions);
 
+    const unsubscribeUrl = `${getPublicBaseUrl(req)}/api/subscriptions/cancel?subscriptionId=${subscription.subscriptionId}`;
+
     await sendNotification({
       channel: "email",
       to: email,
@@ -587,7 +611,7 @@ app.post("/api/subscriptions", async (req, res) => {
       message:
     `${texts.subscriptionConfirmationMessage}
     ${texts.unsubscribeText}
-    http://localhost:${port}/api/subscriptions/cancel?subscriptionId=${subscription.subscriptionId}
+    ${unsubscribeUrl}
     `,
       user_id: subscription.subscriptionId,
       site_id: "subscription-confirmation"
@@ -632,14 +656,16 @@ app.get("/api/subscriptions/cancel", async (req, res) => {
 
 app.post("/api/subscriptions/notify-nearby", async (req, res) => {
   try {
-    const { subscriptionId, site } = req.query;
+    const { subscriptionId, site, language } = req.body;
+    const messageLanguage = language === "en" ? "en" : "sv";
+    const texts = uiTexts[messageLanguage];
 
     const subscriptions = await readSubscriptions();
 
     const subscription = subscriptions.find(
       (sub) =>
         String(sub.subscriptionId) === String(subscriptionId) &&
-        sub.active
+        sub.active !== false
     );
 
     if (!subscription) {
@@ -680,6 +706,8 @@ app.post("/api/subscriptions/notify-nearby", async (req, res) => {
         ${texts.readMoreHere} ${site.url || ""}
 
         ${texts.unsubscribeContact} digitkonsult@gmail.com`,
+        user_id: subscription.subscriptionId,
+        site_id: site.id
       });
     }
 
@@ -695,6 +723,8 @@ app.post("/api/subscriptions/notify-nearby", async (req, res) => {
         ${texts.readMoreHere} ${site.url || ""}
 
         ${texts.unsubscribeContact} digitkonsult@gmail.com`,
+        user_id: subscription.subscriptionId,
+        site_id: site.id
       });
     }
 
