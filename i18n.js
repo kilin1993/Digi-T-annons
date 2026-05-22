@@ -69,18 +69,14 @@ export const uiTexts = {
     subscribeStep: "Prenumerera",
     payStep: "Betala",
     doneStep: "Klart",
-
     subscriptionTitle: "1. Prenumeration",
     registerTitle: "Registrera dig",
     registerInfo: "Ingen bindningstid. Bekräftelse skickas till din e-post.",
-
     emailPlaceholder: "Din e-postadress",
     phonePlaceholder: "Ditt mobilnummer, t.ex. +46701234567",
-
     smsOption: "SMS",
     emailOption: "E-post",
     bothOption: "SMS & E-post",
-
     emailRequired: "Fyll i e-post",
     emailInvalid: "Fyll i en giltig e-postadress",
     phoneRequired: "Fyll i telefonnummer",
@@ -157,18 +153,14 @@ export const uiTexts = {
     subscribeStep: "Subscribe",
     payStep: "Pay",
     doneStep: "Done",
-
     subscriptionTitle: "1. Subscription",
     registerTitle: "Register",
     registerInfo: "No commitment period. Confirmation will be sent to your email.",
-
     emailPlaceholder: "Your email address",
     phonePlaceholder: "Your mobile number, e.g. +46701234567",
-
     smsOption: "SMS",
     emailOption: "Email",
     bothOption: "SMS & Email",
-
     emailRequired: "Enter an email address",
     emailInvalid: "Enter a valid email address",
     phoneRequired: "Enter a phone number",
