@@ -1,4 +1,4 @@
-//Digi-T's konfigurationsfil av pris på prenumeration
+//Dagspressutgivarnas konfigurationsfil för prissättning av prenumeration
 window.UNESCO_AD_CONFIG = {
   pricing: {
     monthly: {
