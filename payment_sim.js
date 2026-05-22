@@ -188,48 +188,45 @@ class PaymentSimulator extends HTMLElement {
   }
 
   // Funktion för att ladda planer från API
-  async loadPlans() {
-    const customerConfig = window.UNESCO_AD_CONFIG;
+async loadPlans() {
+  const customerConfig = window.UNESCO_AD_CONFIG;
 
-    if (customerConfig?.pricing) {
-      this.plans = Object.values(customerConfig.pricing);
-      this.selectedPlan = this.plans[0]?.id || '';
-      this.render();
-      this.bind();
-      return;
-    }
-
-    if (this.mode !== 'api') {
-      this.render();
-      this.bind();
-      return;
-    }
-    // API-läge: hämta planer från servern
-    this.status = 'loading';
-    this.message = t("loadingPlans", this.language);
+  if (customerConfig?.pricing) {
+    this.plans = Object.values(customerConfig.pricing);
+    this.selectedPlan = this.plans[0]?.id || '';
     this.render();
     this.bind();
-
-    // Försök att hämta planer från API
-    try {
-      const res = await fetch(`${this.baseUrl}/plans`);
-      const data = await res.json();
-
-      this.plans = Array.isArray(data.plans) ? data.plans : data;
-      this.selectedPlan = this.plans[0]?.id || '';
-      this.status = 'idle';
-      this.message = '';
-
-      // Om det uppstår ett fel, sätt status till "failed" och visa ett felmeddelande
-    } catch {
-      this.status = 'failed';
-      this.message = t("paymentError", this.language);
-    }
-
-    // Rendera komponenten och binda event listeners
-    this.render();
-    this.bind();
+    return;
   }
+
+  if (this.mode !== 'api') {
+    this.render();
+    this.bind();
+    return;
+  }
+
+  this.status = 'loading';
+  this.message = t("loadingPlans", this.language);
+  this.render();
+  this.bind();
+
+  try {
+    const res = await fetch(`${this.baseUrl}/plans`);
+    const data = await res.json();
+
+    this.plans = Array.isArray(data.plans) ? data.plans : data;
+    this.selectedPlan = this.plans[0]?.id || '';
+    this.status = 'idle';
+    this.message = '';
+  } catch {
+    this.status = 'failed';
+    this.message = t("paymentError", this.language);
+  }
+
+  this.render();
+  this.bind();
+}
+
   // Funktion för att binda event listeners till formulärelement
   bind() {
     const plan = this.shadowRoot.querySelector('#plan');
