@@ -189,6 +189,16 @@ class PaymentSimulator extends HTMLElement {
 
   // Funktion för att ladda planer från API
   async loadPlans() {
+    const customerConfig = window.UNESCO_AD_CONFIG;
+
+    if (customerConfig?.pricing) {
+      this.plans = Object.values(customerConfig.pricing);
+      this.selectedPlan = this.plans[0]?.id || '';
+      this.render();
+      this.bind();
+      return;
+    }
+
     if (this.mode !== 'api') {
       this.render();
       this.bind();
