@@ -7,6 +7,11 @@ const popup = document.getElementById("popup");
 const adCard = document.querySelector(".ad");
 const toggleDescriptionBtn = document.getElementById("toggleDescriptionBtn");
 const languageSelect = document.getElementById("languageSelect");
+const API_BASE_URL = window.UNESCO_AD_BASE_URL || window.location.origin;
+
+function apiUrl(path) {
+  return new URL(path, API_BASE_URL).toString();
+}
 
 // Lagrar all UNESCO-data som hämtas från backend
 let unescoSites = [];
@@ -95,7 +100,7 @@ window.handleDecline = function () {
 // Hämtar UNESCO-data från din egen endpoint i server.js
 async function loadUnescoSites() {
   try {
-    const response = await fetch("/api/unesco/sites");
+    const response = await fetch(apiUrl("/api/unesco/sites"));
     const data = await response.json();
 
     if (!response.ok) {
@@ -517,7 +522,7 @@ container.innerHTML = `
 }
 
 async function createSubscriptionAfterPayment(customer) {
-  const response = await fetch("/api/subscriptions", {
+  const response = await fetch(apiUrl("/api/subscriptions"), {
     method: "POST",
     headers: {
       "Content-Type": "application/json"
@@ -582,7 +587,7 @@ function startLocationMonitoring() {
 async function notifyNearbyHeritage(site) {
   if (!activeSubscription) return;
 
-  const response = await fetch("/api/subscriptions/notify-nearby", {
+  const response = await fetch(apiUrl("/api/subscriptions/notify-nearby"), {
     method: "POST",
     headers: {
       "Content-Type": "application/json"
