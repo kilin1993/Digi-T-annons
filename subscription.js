@@ -1,3 +1,5 @@
+import { t } from "./i18n.js";
+
 const subscriptionStyle = `
 * {
   box-sizing: border-box;
@@ -100,17 +102,22 @@ const subscriptionStyle = `
 
 class SubscriptionForm extends HTMLElement {
   constructor() {
-    super();
-    this.attachShadow({ mode: "open" });
+  super();
+  this.attachShadow({ mode: "open" });
 
-    this.form = {
-      email: "",
-      phone: "",
-      notificationType: "sms"
-    };
+  this.language =
+    document.documentElement.lang?.slice(0, 2).toLowerCase() === "en"
+      ? "en"
+      : "sv";
 
-    this.error = "";
-  }
+  this.form = {
+    email: "",
+    phone: "",
+    notificationType: "sms"
+  };
+
+  this.error = "";
+}
 
   connectedCallback() {
     this.render();
@@ -132,21 +139,25 @@ class SubscriptionForm extends HTMLElement {
     this.bind();
   }
 
-  validate() {
-    if (!this.form.email.trim()) return "Fyll i e-post";
-
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(this.form.email.trim())) {
-      return "Fyll i en giltig e-postadress";
-    }
-
-    if (!this.form.phone.trim()) return "Fyll i telefonnummer";
-
-    if (!/^\+46\d{9}$/.test(this.form.phone.trim())) {
-      return "Telefonnummer måste ha formatet +46701234567";
-    }
-
-    return "";
+validate() {
+  if (!this.form.email.trim()) {
+    return t("emailRequired", this.language);
   }
+
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(this.form.email.trim())) {
+    return t("emailInvalid", this.language);
+  }
+
+  if (!this.form.phone.trim()) {
+    return t("phoneRequired", this.language);
+  }
+
+  if (!/^\+46\d{9}$/.test(this.form.phone.trim())) {
+    return t("phoneInvalid", this.language);
+  }
+
+  return "";
+}
 
   isValid() {
     this.error = this.validate();
@@ -196,31 +207,34 @@ class SubscriptionForm extends HTMLElement {
       <div class="stepper">
         <div class="step">
           <span class="step-number">1</span>
-          <span>Prenumerera</span>
+          <span>${t("subscribeStep", this.language)}</span>
         </div>
         <span>—</span>
         <div class="step">
           <span class="step-number">2</span>
-          <span>Betala</span>
+          <span>${t("payStep", this.language)}</span>
         </div>
         <span>—</span>
         <div class="step">
           <span class="step-number">3</span>
-          <span>Klart</span>
+          <span>${t("doneStep", this.language)}</span>
         </div>
       </div>
 
-      <h2 class="title">1. Prenumeration</h2>
+      <h2 class="title">
+        ${t("subscriptionTitle", this.language)}
+      </h2>
 
       <div class="subscription-box">
-        <h3>Registrera dig</h3>
-        <p>Ingen bindningstid. Bekräftelse skickas till din e-post.</p>
+        <h3>${t("registerTitle", this.language)}</h3>
+
+        <p>${t("registerInfo", this.language)}</p>
 
         <input
           class="input"
           id="email"
           type="email"
-          placeholder="Din e-postadress"
+          placeholder="${t("emailPlaceholder", this.language)}"
           value="${this.form.email}"
         >
 
@@ -228,24 +242,39 @@ class SubscriptionForm extends HTMLElement {
           class="input"
           id="phone"
           type="tel"
-          placeholder="Ditt mobilnummer, t.ex. +46701234567"
+          placeholder="${t("phonePlaceholder", this.language)}"
           value="${this.form.phone}"
         >
 
         <div class="notice-options">
           <label>
-            <input type="radio" name="notificationType" value="sms" ${this.form.notificationType === "sms" ? "checked" : ""}>
-            SMS
+            <input
+              type="radio"
+              name="notificationType"
+              value="sms"
+              ${this.form.notificationType === "sms" ? "checked" : ""}
+            >
+            ${t("smsOption", this.language)}
           </label>
 
           <label>
-            <input type="radio" name="notificationType" value="email" ${this.form.notificationType === "email" ? "checked" : ""}>
-            E-post
+            <input
+              type="radio"
+              name="notificationType"
+              value="email"
+              ${this.form.notificationType === "email" ? "checked" : ""}
+            >
+            ${t("emailOption", this.language)}
           </label>
 
           <label>
-            <input type="radio" name="notificationType" value="both" ${this.form.notificationType === "both" ? "checked" : ""}>
-            SMS & E-post
+            <input
+              type="radio"
+              name="notificationType"
+              value="both"
+              ${this.form.notificationType === "both" ? "checked" : ""}
+            >
+            ${t("bothOption", this.language)}
           </label>
         </div>
 
