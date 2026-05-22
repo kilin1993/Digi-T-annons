@@ -1,116 +1,171 @@
+import "./subscription.js";
 import "./payment_sim.js";
 
 const root = document.getElementById("unesco-ad");
 
 if (root) {
-    root.innerHTML = `
-        <!-- Annonsyta -->
-        <div class="sidebar-box ad" role="button" tabindex="0" aria-label="Öppna UNESCO-annons">
-        <div class="unesco-badge">UNESCO World Heritage</div>    
-        Annonsyta
+  const componentBaseUrl = new URL(".", import.meta.url);
+  window.UNESCO_AD_BASE_URL = window.UNESCO_AD_BASE_URL || componentBaseUrl.origin;
+
+  root.innerHTML = `
+    <!-- Annonsyta -->
+    <div class="sidebar-box ad" role="button" tabindex="0" aria-label="Öppna UNESCO-annons">
+      <div class="unesco-badge">UNESCO World Heritage</div>
+
+      <div class="ad-layout">
+        <div class="ad-main">
+          <h2>Upptäck världsarv nära dig</h2>
+          <p>Upplev världens vackraste platser med minnesvärda äventyr!</p>
+          <button class="ad-button" type="button">Utforska destinationer →</button>
         </div>
 
-        <!-- Overlay -->
-        <div id="overlay" class="overlay" onclick="closeAll()"></div>
+        <div class="ad-sites">
+          <h3>Populära världsarv</h3>
 
-        <!-- Popup -->
-        <div id="popup" class="popup">
-            <div class="popup-left">
-            <div class="unesco-badge">UNESCO World Heritage</div>
-            </div>
+          <div class="ad-site">
+            <strong>Geirangerfjord</strong>
+            <span>Norge</span>
+          </div>
 
-            <div class="popup-right">
-            <button class="close-btn" onclick="closeAll()">×</button>
+          <div class="ad-site">
+            <strong>Colosseum</strong>
+            <span>Italien</span>
+          </div>
 
-            <div class="popup-kicker">Discover a UNESCO World Heritage Site</div>
-            <h1 class="popup-title"></h1>
-            <div class="popup-text"></div>
-
-            <button class="secondary" id="toggleDescriptionBtn" type="button">Visa mer</button>
-            <a id="unescoLink" class="unesco-link" target="_blank" rel="noopener"></a>
-
-            <div id="nearbySites" class="nearby-sites"></div>
-
-            <!-- Språk -->
-            <div class="translation-controls">
-                <label for="languageSelect">Språk/Language</label>
-                <select id="languageSelect">
-                <optgroup label="Translate all">
-                    <option value="sv">Svenska</option>
-                    <option value="en">English</option>
-                </optgroup>
-
-                <optgroup label="Translate World Heritage">
-                    <option value="de">Deutsch</option>
-                    <option value="es">Español</option>
-                    <option value="fr">Français</option>
-                    <option value="it">Italiano</option>
-                    <option value="nl">Nederlands</option>
-                    <option value="zh-Hans">中文</option>
-                    <option value="ar">العربية</option>
-                    <option value="hi">हिन्दी</option>
-                </optgroup>
-                </select>
-            </div>
-
-            <!-- Features -->
-            <div class="feature-list">
-                <div id="featureNearby">📍 Se världsarv nära dig</div>
-                <div id="featureLanguage">🌍 Få kort info på ditt språk</div>
-                <div id="featureQuestions">💬 Ställ frågor om platsen</div>
-                <div id="featureSms">📱 Prenumerera på SMS-notiser</div>
-            </div>
-
-            <!-- Actions -->
-            <div class="popup-actions">
-                <button class="primary" onclick="activateAndOpenPayment()">Prenumerera på SMS</button>
-                <button class="secondary" onclick="handleDecline()">Nej tack, inte nu</button>
-
-                <button
-                id="chatToggleBtn"
-                class="chat-toggle"
-                type="button"
-                aria-expanded="false"
-                aria-controls="chatbot"
-                title="Öppna chatten"
-                >
-                <svg class="chat-icon chat-icon-message" viewBox="0 0 24 24">
-                    <path d="M21 11.5a8.4 8.4 0 0 1-.9 3.8 8.6 8.6 0 0 1-7.7 4.7 8.4 8.4 0 0 1-3.8-.9L3 21l1.9-5.2A8.4 8.4 0 0 1 4 12a8.6 8.6 0 0 1 4.7-7.7A8.4 8.4 0 0 1 12.5 3H13a8 8 0 0 1 8 8v.5Z"></path>
-                    <path d="M8 10h8"></path>
-                    <path d="M8 14h5"></path>
-                </svg>
-                <svg class="chat-icon chat-icon-close" viewBox="0 0 24 24">
-                    <path d="M18 6 6 18"></path>
-                    <path d="m6 6 12 12"></path>
-                </svg>
-                </button>
-            </div>
-
-            <!-- Chatbot -->
-            <section id="chatbot" class="chatbot collapsed">
-                <div class="chatbot-title">Fråga om världsarvet</div>
-                <div class="chatbot-subtitle">Testa: var ligger det, vad är det, region eller avstånd.</div>
-
-                <div class="chatbot-body">
-                <div id="chatMessages" class="chat-messages"></div>
-
-                <form id="chatForm" class="chat-form">
-                    <input
-                    id="chatInput"
-                    type="text"
-                    autocomplete="off"
-                    placeholder="Skriv en fråga..."
-                    >
-                    <button class="primary" type="submit">Skicka</button>
-                </form>
-                </div>
-            </section>
-
-            <!-- Payment -->
-            <div id="paymentContainer" class="payment-inline hidden"></div>
-
-            </div>
+          <div class="ad-site">
+            <strong>Machu Picchu</strong>
+            <span>Peru</span>
+          </div>
         </div>
-    `;
-    await import("./unesco.js");
+      </div>
+    </div>
+
+    <!-- Overlay -->
+    <div id="overlay" class="overlay" onclick="closeAll()"></div>
+
+    <!-- Popup -->
+    <div id="popup" class="popup">
+      <div class="popup-left">
+        <div class="unesco-badge">
+          <span>
+            UNESCO<br>
+            <small>World Heritage</small>
+          </span>
+        </div>
+
+        <div class="left-content">
+          <h1>
+            <span id="heroTitleLine1"></span><br>
+            <span id="heroTitleLine2"></span><br>
+            <span id="heroTitleLine3"></span>
+          </h1>
+
+          <p>
+            <strong id="heroNoticeTitle"></strong><br>
+            <small id="heroNoticeSubtitle"></small>
+          </p>
+
+          <div class="left-feature">
+            <div>
+              <strong id="heroRealtimeTitle"></strong>
+              <small id="heroRealtimeSubtitle"></small>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="popup-right">
+        <button class="close-btn" onclick="closeAll()">×</button>
+
+        <div class="popup-kicker">Discover a UNESCO World Heritage Site</div>
+        <h1 class="popup-title"></h1>
+        <div class="popup-text"></div>
+
+        <button class="secondary" id="toggleDescriptionBtn" type="button">Visa mer</button>
+        <a id="unescoLink" class="unesco-link" target="_blank" rel="noopener"></a>
+
+        <div id="nearbySites" class="nearby-sites"></div>
+
+        <!-- Språk -->
+        <div class="translation-controls">
+          <label for="languageSelect">Språk/Language</label>
+          <select id="languageSelect">
+            <optgroup label="Translate all">
+              <option value="sv">Svenska</option>
+              <option value="en">English</option>
+            </optgroup>
+
+            <optgroup label="Translate World Heritage">
+              <option value="de">Deutsch</option>
+              <option value="es">Español</option>
+              <option value="fr">Français</option>
+              <option value="it">Italiano</option>
+              <option value="nl">Nederlands</option>
+              <option value="zh-Hans">中文</option>
+              <option value="ar">العربية</option>
+              <option value="hi">हिन्दी</option>
+            </optgroup>
+          </select>
+        </div>
+
+        <!-- Features -->
+        <div class="feature-list">
+          <div id="featureNearby">📍 Se världsarv nära dig</div>
+          <div id="featureLanguage">🌍 Få kort info på ditt språk</div>
+          <div id="featureQuestions">💬 Ställ frågor om platsen</div>
+          <div id="featureSms">📱 Prenumerera på SMS-notiser</div>
+        </div>
+
+        <!-- Actions -->
+        <div class="popup-actions">
+          <button class="primary" onclick="activateAndOpenPayment()">Prenumerera på SMS</button>
+          <button class="secondary" onclick="handleDecline()">Nej tack, inte nu</button>
+
+          <button
+            id="chatToggleBtn"
+            class="chat-toggle"
+            type="button"
+            aria-expanded="false"
+            aria-controls="chatbot"
+            title="Öppna chatten"
+          >
+            <svg class="chat-icon chat-icon-message" viewBox="0 0 24 24">
+              <path d="M21 11.5a8.4 8.4 0 0 1-.9 3.8 8.6 8.6 0 0 1-7.7 4.7 8.4 8.4 0 0 1-3.8-.9L3 21l1.9-5.2A8.4 8.4 0 0 1 4 12a8.6 8.6 0 0 1 4.7-7.7A8.4 8.4 0 0 1 12.5 3H13a8 8 0 0 1 8 8v.5Z"></path>
+              <path d="M8 10h8"></path>
+              <path d="M8 14h5"></path>
+            </svg>
+            <svg class="chat-icon chat-icon-close" viewBox="0 0 24 24">
+              <path d="M18 6 6 18"></path>
+              <path d="m6 6 12 12"></path>
+            </svg>
+          </button>
+        </div>
+
+        <!-- Chatbot -->
+        <section id="chatbot" class="chatbot collapsed">
+          <div class="chatbot-title">Fråga om världsarvet</div>
+          <div class="chatbot-subtitle">Testa: var ligger det, vad är det, region eller avstånd.</div>
+
+          <div class="chatbot-body">
+            <div id="chatMessages" class="chat-messages"></div>
+
+            <form id="chatForm" class="chat-form">
+              <input
+                id="chatInput"
+                type="text"
+                autocomplete="off"
+                placeholder="Skriv en fråga..."
+              >
+              <button class="primary" type="submit">Skicka</button>
+            </form>
+          </div>
+        </section>
+
+        <!-- Payment -->
+        <div id="paymentContainer" class="payment-inline hidden"></div>
+      </div>
+    </div>
+  `;
+
+  await import("./unesco.js");
 }
