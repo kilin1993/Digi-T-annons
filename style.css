@@ -276,8 +276,8 @@ button {
   }
   
   .popup.show {
-    display: grid;
-    grid-template-columns: 48% 52%;
+    display: grid!important;
+    grid-template-columns: 48% 52%!important;
   }
   
   /* Vänster bildpanel */

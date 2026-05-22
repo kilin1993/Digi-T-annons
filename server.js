@@ -6,6 +6,7 @@ import dotenv from "dotenv";
 dotenv.config();
 import { adConfig } from "./ad-config.js";
 import fs from "fs/promises";
+import { uiTexts } from "./i18n.js";
 
 const app = express();
 const port = process.env.PORT || 3000;
@@ -30,7 +31,6 @@ const KLARNA_PASSWORD = process.env.KLARNA_PASSWORD || '';
 
 // Serverar filer direkt från projektets rotmapp
 app.use(express.static(__dirname));
-app.use(express.json());
 
 // hantering av CORS och JSON-body parsing
 app.use(express.json());
@@ -84,16 +84,37 @@ function mapUnescoRecord(site) {
   };
 }
 
+let cachedSites = null;
+let cacheTimestamp = 0;
+
+//Data från Unesco API hämtas varje 24h, cachas på servern där emellan
+//för att öka prestanda och onödiga anrop
+const CACHE_DURATION = 24 * 60 * 60 * 1000; // 24 timmar
+
 // Egen endpoint som frontend och andra komponenter kan använda
 app.get("/api/unesco/sites", async (req, res) => {
   try {
+
+    // Om cache finns och är giltig → använd den
+    if (
+      cachedSites &&
+      Date.now() - cacheTimestamp < CACHE_DURATION
+    ) {
+      console.log("Serving UNESCO sites from cache");
+      return res.json(cachedSites);
+    }
+
+    console.log("Fetching UNESCO sites from UNESCO API");
+
     const allSites = [];
     const limit = 100;
     let offset = 0;
     let keepFetching = true;
 
     while (keepFetching) {
-      const url = `https://data.unesco.org/api/explore/v2.1/catalog/datasets/whc001/records?limit=${limit}&offset=${offset}&lang=en`;
+
+      const url =
+        `https://data.unesco.org/api/explore/v2.1/catalog/datasets/whc001/records?limit=${limit}&offset=${offset}&lang=en`;
 
       const response = await fetch(url, {
         headers: {
@@ -110,6 +131,7 @@ app.get("/api/unesco/sites", async (req, res) => {
       const results = data.results || [];
 
       const mappedSites = results.map(mapUnescoRecord);
+
       allSites.push(...mappedSites);
 
       if (results.length < limit) {
@@ -119,9 +141,17 @@ app.get("/api/unesco/sites", async (req, res) => {
       }
     }
 
+    // Spara cache
+    cachedSites = allSites;
+    cacheTimestamp = Date.now();
+
+    console.log(`Cached ${allSites.length} UNESCO sites`);
+
     res.json(allSites);
+
   } catch (error) {
     console.error("Error fetching UNESCO data:", error);
+
     res.status(500).json({
       error: "Could not fetch UNESCO data"
     });
@@ -403,14 +433,14 @@ app.post('/payments', async (req, res) => {
       });
     }
 
-    const subscription = await createSubscription(email, phone);
+    
 
     return res.json({
       status: 'success',
       message: 'Betalningen lyckades',
       plan: selectedPlan,
       paymentId: `pay_${now}`,
-      subscriptionId: subscription.subscriptionId,
+      subscriptionId: `sub_${now}`,
       plan: selectedPlan,
       paymentMethod,
       customer: paymentMethod === 'klarna' ? { email, phone } : undefined,
@@ -498,29 +528,12 @@ async function saveSubscriptions(subscriptions) {
   );
 }
 
-async function createSubscription(email, phone) {
-  const subscriptions = await readSubscriptions();
-
-  const nextId =
-    subscriptions.length > 0
-      ? subscriptions[subscriptions.length - 1].subscriptionId + 1
-      : 1;
-
-  const subscription = {
-    subscriptionId: nextId,
-    email,
-    phone
-  };
-
-  subscriptions.push(subscription);
-  await saveSubscriptions(subscriptions);
-
-  return subscription;
-}
 
 app.post("/api/subscriptions", async (req, res) => {
   try {
-    const { email, phone, notificationType } = req.body;
+    const { email, phone, notificationType, language } = req.body;
+    const messageLanguage = language === "en" ? "en" : "sv";
+    const texts = uiTexts[messageLanguage];
 
     if (!email || !phone || !notificationType) {
       return res.status(400).json({
@@ -529,23 +542,32 @@ app.post("/api/subscriptions", async (req, res) => {
       });
     }
 
+    const subscriptions = await readSubscriptions();
+
+    const nextId =
+      subscriptions.length > 0
+        ? Math.max(...subscriptions.map((sub) => Number(sub.subscriptionId) || 0)) + 1
+        : 1;
+
     const subscription = {
-      id: createSubscriptionId(),
+      subscriptionId: nextId,
       email,
       phone,
       notificationType,
       active: true,
+      sentSiteIds: [],
       created_at: new Date().toISOString()
     };
 
     subscriptions.push(subscription);
+    await saveSubscriptions(subscriptions);
 
     await sendNotification({
       channel: "email",
       to: email,
-      subject: "Bekräftelse på prenumeration",
-      message: `Du har registrerat dig för notiser om UNESCO-världsarv. Vald notistyp: ${notificationType}.`,
-      user_id: subscription.id,
+      subject: texts.subscriptionConfirmationSubject,
+      message: texts.subscriptionConfirmationMessage,
+      user_id: subscription.subscriptionId,
       site_id: "subscription-confirmation"
     });
 
@@ -562,32 +584,49 @@ app.post("/api/subscriptions", async (req, res) => {
   }
 });
 
-app.post("/api/subscriptions/cancel", (req, res) => {
-  const { subscriptionId } = req.body;
+app.post("/api/subscriptions/cancel", async (req, res) => {
+  try {
+    const { subscriptionId } = req.body;
 
-  const subscription = subscriptions.find((sub) => sub.id === subscriptionId);
+    const subscriptions = await readSubscriptions();
 
-  if (!subscription) {
-    return res.status(404).json({
+    const subscription = subscriptions.find(
+      (sub) => String(sub.subscriptionId) === String(subscriptionId)
+    );
+
+    if (!subscription) {
+      return res.status(404).json({
+        success: false,
+        error: "not_found"
+      });
+    }
+
+    subscription.active = false;
+    await saveSubscriptions(subscriptions);
+
+    return res.json({
+      success: true,
+      subscription
+    });
+  } catch (error) {
+    console.error("Cancel subscription error:", error);
+    return res.status(500).json({
       success: false,
-      error: "not_found"
+      error: "server_error"
     });
   }
-
-  subscription.active = false;
-
-  return res.json({
-    success: true,
-    subscription
-  });
 });
 
 app.post("/api/subscriptions/notify-nearby", async (req, res) => {
   try {
     const { subscriptionId, site } = req.body;
 
+    const subscriptions = await readSubscriptions();
+
     const subscription = subscriptions.find(
-      (sub) => sub.id === subscriptionId && sub.active
+      (sub) =>
+        String(sub.subscriptionId) === String(subscriptionId) &&
+        sub.active
     );
 
     if (!subscription) {
@@ -604,9 +643,11 @@ app.post("/api/subscriptions/notify-nearby", async (req, res) => {
       });
     }
 
-    const key = `${subscription.id}:${site.id}`;
+    if (!Array.isArray(subscription.sentSiteIds)) {
+      subscription.sentSiteIds = [];
+    }
 
-    if (sentHeritageNotifications.has(key)) {
+    if (subscription.sentSiteIds.includes(site.id)) {
       return res.json({
         success: true,
         skipped: true,
@@ -619,7 +660,7 @@ app.post("/api/subscriptions/notify-nearby", async (req, res) => {
         channel: "sms",
         to: subscription.phone,
         message: `Hej! Du är nära världsarvet ${site.name}. Läs mer här: ${site.url || ""}`,
-        user_id: subscription.id,
+        user_id: subscription.subscriptionId,
         site_id: site.id
       });
     }
@@ -630,12 +671,13 @@ app.post("/api/subscriptions/notify-nearby", async (req, res) => {
         to: subscription.email,
         subject: `Du är nära ${site.name}`,
         message: `Hej! Du är nära världsarvet ${site.name}. Läs mer här: ${site.url || ""}`,
-        user_id: subscription.id,
+        user_id: subscription.subscriptionId,
         site_id: site.id
       });
     }
 
-    sentHeritageNotifications.add(key);
+    subscription.sentSiteIds.push(site.id);
+    await saveSubscriptions(subscriptions);
 
     return res.json({
       success: true

@@ -1,5 +1,6 @@
 export const uiTexts = {
   sv: {
+    //Right-content
     discover: "Upptäck ett UNESCO-världsarv",
     chooseLanguage: "Välj språk",
     translate: "Översätt",
@@ -26,6 +27,8 @@ export const uiTexts = {
     unescoLink: "Läs mer hos UNESCO →",
     nearbySites: "Fler världsarv i närheten",
     backToNearest: "← Tillbaka till närmaste världsarv",
+
+    // Left-content
     heroTitleLine1: "Upptäck.",
     heroTitleLine2: "Bevara.",
     heroTitleLine3: "Få notiser.",
@@ -33,9 +36,55 @@ export const uiTexts = {
     heroNoticeSubtitle: "När du är nära ett UNESCO-världsarv.",
     heroRealtimeTitle: "Notiser i realtid",
     heroRealtimeSubtitle: "När du är nära ett världsarv.",
+
+    //SMS-utskick
+    subscriptionConfirmationSubject: "Bekräftelse på prenumeration",
+    subscriptionConfirmationMessage: "Du har registrerat dig för notiser om UNESCO-världsarv.",
+
+    //Mail-utskick
+
+    //payment_sim.js komponent
+    securePayment: "Säker betalning med kryptering",
+    payWithKlarna: "Betala med Klarna",
+    completeKlarna: "Slutför Klarna",
+    preparingKlarna: "Förbereder Klarna...",
+    klarnaLoading: "Klarna laddas, klicka igen när det är klart.",
+    klarnaReady: "Klarna är redo. Klicka knappen igen för att slutföra betalningen.",
+    authorizingKlarna: "Auktoriserar Klarna betalning...",
+    paymentApproved: "Betalningen är godkänd!",
+    paymentError: "Något gick fel",
+    choosePlan: "Välj en plan",
+    monthly: "Månatlig",
+    yearly: "Årlig",
+    cardHolderName: "Kortinnehavarens namn",
+    cardNumber: "Kortnummer",
+    expiry: "MM/ÅÅ",
+    subscriptionDetailsRequired: "Fyll i prenumerationsuppgifterna",
+    cardHolderRequired: "Fyll i kortinnehavarens namn",
+    cardNumberRequired: "Fyll i kortnummer",
+    expiryRequired: "Fyll i utgångsdatum",
+    cvcRequired: "Fyll i CVC",
+
+    //subscription.js komponent
+    subscribeStep: "Prenumerera",
+    payStep: "Betala",
+    doneStep: "Klart",
+    subscriptionTitle: "1. Prenumeration",
+    registerTitle: "Registrera dig",
+    registerInfo: "Ingen bindningstid. Bekräftelse skickas till din e-post.",
+    emailPlaceholder: "Din e-postadress",
+    phonePlaceholder: "Ditt mobilnummer, t.ex. +46701234567",
+    smsOption: "SMS",
+    emailOption: "E-post",
+    bothOption: "SMS & E-post",
+    emailRequired: "Fyll i e-post",
+    emailInvalid: "Fyll i en giltig e-postadress",
+    phoneRequired: "Fyll i telefonnummer",
+    phoneInvalid: "Telefonnummer måste ha formatet +46701234567",
   },
 
   en: {
+    //Right-content
     discover: "Discover a UNESCO World Heritage Site",
     chooseLanguage: "Choose language",
     translate: "Translate",
@@ -62,6 +111,8 @@ export const uiTexts = {
     unescoLink: "Read more at UNESCO →",
     nearbySites: "More nearby world heritage sites",
     backToNearest: "← Back to nearest world heritage site",
+
+    //Left-content
     heroTitleLine1: "Discover.",
     heroTitleLine2: "Preserve.",
     heroTitleLine3: "Get notified.",
@@ -69,6 +120,51 @@ export const uiTexts = {
     heroNoticeSubtitle: "When you are near a UNESCO World Heritage site.",
     heroRealtimeTitle: "Real-time notifications",
     heroRealtimeSubtitle: "When you are near a World Heritage site.",
+
+    //SMS-utskick
+    subscriptionConfirmationSubject: "Subscription confirmation",
+    subscriptionConfirmationMessage: "You have registered for UNESCO World Heritage notifications.",
+
+    //Mail-utskick
+    
+    //payment_sim.js komponent
+    securePayment: "Secure payment with encryption",
+    payWithKlarna: "Pay with Klarna",
+    completeKlarna: "Complete Klarna",
+    preparingKlarna: "Preparing Klarna...",
+    klarnaLoading: "Klarna is loading, click again when it is ready.",
+    klarnaReady: "Klarna is ready. Click the button again to complete the payment.",
+    authorizingKlarna: "Authorizing Klarna payment...",
+    paymentApproved: "Payment approved!",
+    paymentError: "Something went wrong",
+    choosePlan: "Choose a plan",
+    monthly: "Monthly",
+    yearly: "Yearly",
+    cardHolderName: "Cardholder name",
+    cardNumber: "Card number",
+    expiry: "MM/YY",
+    subscriptionDetailsRequired: "Fill in the subscription details",
+    cardHolderRequired: "Fill in the cardholder name",
+    cardNumberRequired: "Fill in the card number",
+    expiryRequired: "Fill in the expiry date",
+    cvcRequired: "Fill in CVC",
+
+    //subscription.js komponent
+    subscribeStep: "Subscribe",
+    payStep: "Pay",
+    doneStep: "Done",
+    subscriptionTitle: "1. Subscription",
+    registerTitle: "Register",
+    registerInfo: "No commitment period. Confirmation will be sent to your email.",
+    emailPlaceholder: "Your email address",
+    phonePlaceholder: "Your mobile number, e.g. +46701234567",
+    smsOption: "SMS",
+    emailOption: "Email",
+    bothOption: "SMS & Email",
+    emailRequired: "Enter an email address",
+    emailInvalid: "Enter a valid email address",
+    phoneRequired: "Enter a phone number",
+    phoneInvalid: "Phone number must be in the format +46701234567",
   }
 };
 

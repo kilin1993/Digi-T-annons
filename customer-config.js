@@ -1,5 +1,5 @@
-//Digi-T's konfigurationsfil av pris på prenumeration
-export const adConfig = {
+//Dagspressutgivarnas konfigurationsfil för prissättning av prenumeration
+window.UNESCO_AD_CONFIG = {
   pricing: {
     monthly: {
       id: "monthly",

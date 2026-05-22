@@ -1,3 +1,5 @@
+import { t } from "./i18n.js";
+
 //css utanför klassen för att hålla det rent och bara renderas en gång
 const style = `
 * {
@@ -17,38 +19,10 @@ const style = `
   background: #fff;
   box-shadow: 0 12px 35px rgba(0,0,0,0.08);
 }
-
-.stepper {
-  display: flex;
-  align-items: center;
-  gap: 14px;
-  margin-bottom: 24px;
-  color: #777;
-  font-size: 0.9rem;
-}
-
-.step {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.step-number {
-  width: 28px;
-  height: 28px;
-  border-radius: 50%;
-  background: #e7eee9;
-  color: #12352f;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  font-weight: bold;
-}
-
-.step.active .step-number {
+/* .step.active .step-number {
   background: #0f5132;
   color: white;
-}
+} */
 
 .title {
   font-size: 1.35rem;
@@ -63,23 +37,6 @@ const style = `
   margin-top: 18px;
 }
 
-.subscription-box {
-  border: 1px solid #e2e8e4;
-  border-radius: 16px;
-  padding: 18px;
-  background: #fbfdfb;
-}
-
-.subscription-box h3 {
-  margin: 0 0 6px;
-  font-size: 1.05rem;
-}
-
-.subscription-box p {
-  margin: 0 0 14px;
-  font-size: 0.9rem;
-  color: #555;
-}
 
 .input,
 .select {
@@ -101,7 +58,6 @@ const style = `
   box-shadow: 0 0 0 3px rgba(15,81,50,0.12);
 }
 
-.notice-options,
 .methods {
   display: flex;
   gap: 10px;
@@ -109,7 +65,7 @@ const style = `
   margin: 12px 0;
 }
 
-.notice-options label,
+
 .methods label {
   border: 1px solid #d7ddd9;
   border-radius: 12px;
@@ -181,23 +137,32 @@ class PaymentSimulator extends HTMLElement {
     super();
     this.attachShadow({ mode: 'open' });
 
+    //Språk
+    this.language =
+      document.documentElement.lang?.slice(0, 2).toLowerCase() === "en"
+        ? "en"
+        : "sv";
+
     // ger planer för demo-läge
     this.plans = [
-      { id: 'onetime', name: 'Månatlig', amount: 49, currency: 'SEK' },
-      { id: 'subscription', name: 'Årlig', amount: 549, currency: 'SEK' }
+      { id: 'onetime', nameKey: 'monthly', amount: 49, currency: 'SEK' },
+      { id: 'subscription', nameKey: 'yearly', amount: 549, currency: 'SEK' }
     ];
 
     // standardval för plan och betalningsmetod
-    this.selectedPlan = 'onetime';
+    this.selectedPlan = 'monthly';
     this.method = 'card';
     this.status = 'idle';
     this.message = '';
 
+    
+    this.subscription = {
+      email: "",
+      phone: "",
+      notificationType: "sms"
+    };
     // formdata för betalning
     this.form = {
-      email: '',
-      phone: '',
-      notificationType: 'sms',
       cardName: '',
       cardNumber: '',
       expiry: '',
@@ -223,43 +188,59 @@ class PaymentSimulator extends HTMLElement {
   }
 
   // Funktion för att ladda planer från API
-  async loadPlans() {
-    if (this.mode !== 'api') {
-      this.render();
-      this.bind();
-      return;
-    }
-    // API-läge: hämta planer från servern
-    this.status = 'loading';
-    this.message = 'Hämtar planer...';
+async loadPlans() {
+  const customerConfig = window.UNESCO_AD_CONFIG;
+
+  if (customerConfig?.pricing) {
+    this.plans = Object.values(customerConfig.pricing);
+    this.selectedPlan = this.plans[0]?.id || '';
     this.render();
     this.bind();
-
-    // Försök att hämta planer från API
-    try {
-      const res = await fetch(`${this.baseUrl}/plans`);
-      const data = await res.json();
-
-      this.plans = Array.isArray(data.plans) ? data.plans : data;
-      this.selectedPlan = this.plans[0]?.id || '';
-      this.status = 'idle';
-      this.message = '';
-
-      // Om det uppstår ett fel, sätt status till "failed" och visa ett felmeddelande
-    } catch {
-      this.status = 'failed';
-      this.message = 'Kunde inte hämta planer';
-    }
-
-    // Rendera komponenten och binda event listeners
-    this.render();
-    this.bind();
+    return;
   }
+
+  if (this.mode !== 'api') {
+    this.render();
+    this.bind();
+    return;
+  }
+
+  this.status = 'loading';
+  this.message = t("loadingPlans", this.language);
+  this.render();
+  this.bind();
+
+  try {
+    const res = await fetch(`${this.baseUrl}/plans`);
+    const data = await res.json();
+
+    this.plans = Array.isArray(data.plans) ? data.plans : data;
+    this.selectedPlan = this.plans[0]?.id || '';
+    this.status = 'idle';
+    this.message = '';
+  } catch {
+    this.status = 'failed';
+    this.message = t("paymentError", this.language);
+  }
+
+  this.render();
+  this.bind();
+}
+
   // Funktion för att binda event listeners till formulärelement
   bind() {
     const plan = this.shadowRoot.querySelector('#plan');
     const pay = this.shadowRoot.querySelector('#pay');
+    // Prenumerationskomponenten
+    const subscriptionForm = this.shadowRoot.querySelector("subscription-form");
 
+    if (subscriptionForm) {
+      subscriptionForm.setData(this.subscription);
+    
+      subscriptionForm.addEventListener("subscription-change", (event) => {
+        this.subscription = event.detail;
+      });
+    }
     // När en plan väljs, uppdatera selectedPlan
     if (plan) {
       plan.onchange = (e) => {
@@ -279,27 +260,17 @@ class PaymentSimulator extends HTMLElement {
     });
 
     // Hämta inputfält för kund- och kortinformation
-    const email = this.shadowRoot.querySelector('#email');
-    const phone = this.shadowRoot.querySelector('#phone');
     const cardName = this.shadowRoot.querySelector('#cardName');
     const cardNumber = this.shadowRoot.querySelector('#cardNumber');
     const expiry = this.shadowRoot.querySelector('#expiry');
     const cvc = this.shadowRoot.querySelector('#cvc');
-    const notificationType = this.shadowRoot.querySelector('#notificationType');
 
     // Binda inputhändelser för att uppdatera formdata
-    if (email) email.oninput = (e) => (this.form.email = e.target.value);
-    if (phone) phone.oninput = (e) => (this.form.phone = e.target.value);
     if (cardName) cardName.oninput = (e) => (this.form.cardName = e.target.value);
     if (cardNumber) cardNumber.oninput = (e) => (this.form.cardNumber = e.target.value);
     if (expiry) expiry.oninput = (e) => (this.form.expiry = e.target.value);
     if (cvc) cvc.oninput = (e) => (this.form.cvc = e.target.value);
 
-    this.shadowRoot.querySelectorAll('[name="notificationType"]').forEach((el) => {
-      el.onchange = (e) => {
-        this.form.notificationType = e.target.value;
-      };
-    });
 
     // När "Betala" knappen klickas, starta betalningsprocessen
     if (pay) {
@@ -310,40 +281,30 @@ class PaymentSimulator extends HTMLElement {
   // Funktion för att validera formuläret innan betalning
   validate() {
     if (!this.selectedPlan) {
-      return 'Välj en plan';
+      return t("choosePlan", this.language);
     }
 
-    if (!this.form.email.trim()) {
-      return 'Fyll i e-post';
-    }
+    const subscriptionForm = this.shadowRoot.querySelector("subscription-form");
 
-    if (!this.form.phone.trim()) {
-      return 'Fyll i telefonnummer';
-    }
-
-    if (!/^\+46\d{9}$/.test(this.form.phone.trim())) {
-      return 'Telefonnummer måste ha formatet +46701234567';
-    }
-
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(this.form.email.trim())) {
-      return 'Fyll i en giltig e-postadress';
+    if (!subscriptionForm || !subscriptionForm.isValid()) {
+      return t("subscriptionDetailsRequired", this.language);
     }
 
     if (this.method === 'card') {
       if (!this.form.cardName.trim()) {
-        return 'Fyll i kortinnehavarens namn';
+        return t("cardHolderRequired", this.language);
       }
 
       if (!this.form.cardNumber.trim()) {
-        return 'Fyll i kortnummer';
+        return t("cardNumberRequired", this.language);
       }
 
       if (!this.form.expiry.trim()) {
-        return 'Fyll i utgångsdatum';
+        return t("expiryRequired", this.language);
       }
 
       if (!this.form.cvc.trim()) {
-        return 'Fyll i CVC';
+        return t("cvcRequired", this.language);
       }
     }
 
@@ -361,9 +322,25 @@ class PaymentSimulator extends HTMLElement {
       return;
     }
 
+    const subscriptionForm = this.shadowRoot.querySelector("subscription-form");
+
+    if (subscriptionForm) {
+      this.subscription = subscriptionForm.getData();
+    }
+
+    if (this.method === 'klarna' && this.klarnaReady) {
+      await this.authorizeKlarnaPayment();
+      this.render();
+      this.bind();
+      return;
+    }
+
     // Status medan betalningen hanteras
     this.status = 'processing';
-    this.message = this.method === 'klarna' ? 'Förbereder Klarna...' : 'Bearbetar...';
+    this.message = this.method === 'klarna'
+      ? t("preparingKlarna", this.language)
+      : t("processing", this.language);
+
     this.render();
     this.bind();
 
@@ -376,7 +353,7 @@ class PaymentSimulator extends HTMLElement {
             await this.authorizeKlarnaPayment();
           } else {
             this.status = 'idle';
-            this.message = 'Klarna laddas, klicka igen när det är klart.';
+            this.message = t("klarnaLoading", this.language);
             this.render();
             this.bind();
             return;
@@ -390,7 +367,7 @@ class PaymentSimulator extends HTMLElement {
     } catch (error) {
       console.error('Frontendfel i pay():', error);
       this.status = 'failed';
-      this.message = error.message || 'Något gick fel';
+      this.message = error.message || t("paymentError", this.language);
       this.render();
       this.bind();
       return;
@@ -403,27 +380,30 @@ class PaymentSimulator extends HTMLElement {
   // Funktion för att hantera Klarna betalning
   async handleKlarnaPayment() {
     try {
+      console.log("Klarna customer:", this.subscription);
+
       const response = await fetch(`${this.baseUrl}/klarna/sessions`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           planId: this.selectedPlan,
           customer: {
-            email: this.form.email,
-            phone: this.form.phone
+            email: this.subscription.email,
+            phone: this.subscription.phone
           }
         })
       });
 
       const data = await response.json();
+
       if (!response.ok || data.status !== 'success') {
-        throw new Error(data.message || 'Kunde inte skapa Klarna-session');
+        throw new Error(data.message || t("paymentError", this.language));
       }
 
       this.klarnaSession = data;
       this.klarnaReady = false;
       this.status = 'idle';
-      this.message = 'Laddar Klarna...';
+      this.message = t("klarnaLoading", this.language);
       this.render();
       this.bind();
 
@@ -431,10 +411,11 @@ class PaymentSimulator extends HTMLElement {
       await this.initKlarnaPayments();
 
       this.status = 'success';
-      this.message = 'Klarna är redo. Klicka knappen igen för att slutföra betalningen.';
+      this.message = t("klarnaReady", this.language);
       this.klarnaReady = true;
       this.render();
       this.bind();
+
     } catch (error) {
       throw error;
     }
@@ -449,7 +430,7 @@ class PaymentSimulator extends HTMLElement {
       script.src = 'https://x.klarnacdn.net/kp/lib/v1/api.js';
       script.async = true;
       script.onload = resolve;
-      script.onerror = () => reject(new Error('Kunde inte ladda Klarna SDK'));
+      script.onerror = () => reject(new Error(t("paymentError", this.language)));
       document.head.appendChild(script);
     });
   }
@@ -458,7 +439,7 @@ class PaymentSimulator extends HTMLElement {
   async initKlarnaPayments() {
     return new Promise((resolve, reject) => {
       if (!window.Klarna || !window.Klarna.Payments) {
-        return reject(new Error('Klarna är inte tillgänglig'));
+        return reject(new Error(t("paymentError", this.language)));
       }
 
       window.Klarna.Payments.init({
@@ -466,8 +447,9 @@ class PaymentSimulator extends HTMLElement {
       });
 
       const container = this.shadowRoot.querySelector('#klarna-container');
+
       if (!container) {
-        return reject(new Error('Klarna-container saknas i DOM'));
+        return reject(new Error(t("paymentError", this.language)));
       }
 
       window.Klarna.Payments.load(
@@ -479,7 +461,7 @@ class PaymentSimulator extends HTMLElement {
           if (res && res.show_form) {
             resolve();
           } else {
-            reject(new Error('Klarna är inte tillgängligt för denna order'));
+            reject(new Error(t("paymentError", this.language)));
           }
         }
       );
@@ -489,20 +471,19 @@ class PaymentSimulator extends HTMLElement {
   // Funktion för att auktorisera Klarna betalning
   async authorizeKlarnaPayment() {
     if (!window.Klarna || !window.Klarna.Payments) {
-      throw new Error('Klarna är inte tillgängligt');
+      throw new Error(t("paymentError", this.language));
     }
 
     this.status = 'processing';
-    this.message = 'Auktoriserar Klarna betalning...';
-    this.render();
+    this.message = t("authorizingKlarna", this.language);
 
     return new Promise((resolve, reject) => {
       window.Klarna.Payments.authorize(
         {},
         {
           billing_address: {
-            email: this.form.email,
-            phone: this.form.phone,
+            email: this.subscription.email,
+            phone: this.subscription.phone,
             country: 'SE',
             given_name: 'Test',
             family_name: 'Kund',
@@ -524,38 +505,46 @@ class PaymentSimulator extends HTMLElement {
               });
 
               const orderData = await orderResponse.json();
+
               if (!orderResponse.ok || orderData.status !== 'success') {
-                throw new Error(orderData.message || 'Kunde inte skapa order');
+                throw new Error(orderData.message || t("paymentError", this.language));
               }
 
+              const customerData = { ...this.subscription };
+
               this.status = 'success';
-              this.message = 'Betalningen är godkänd!';
+              this.message = t("paymentApproved", this.language);
+
+              this.subscription = {
+                email: "",
+                phone: "",
+                notificationType: "sms"
+              };
+
               this.dispatchEvent(new CustomEvent('payment-success', {
                 detail: {
                   order_id: orderData.order_id,
                   method: 'klarna',
-                  customer: {
-                    email: this.form.email,
-                    phone: this.form.phone,
-                    notificationType: this.form.notificationType
-                  }
+                  customer: customerData
                 },
                 bubbles: true,
                 composed: true
               }));
+
               this.render();
               this.bind();
               resolve();
+
             } catch (error) {
               this.status = 'failed';
-              this.message = error.message || 'Kunde inte skapa order';
+              this.message = error.message || t("paymentError", this.language);
               this.render();
               this.bind();
               reject(error);
             }
           } else {
             this.status = 'failed';
-            this.message = (res && res.error && res.error.message) || 'Klarna nekade auktoriseringen';
+            this.message = (res && res.error && res.error.message) || t("paymentFailed", this.language);
             this.render();
             this.bind();
             reject(new Error(this.message));
@@ -577,8 +566,8 @@ class PaymentSimulator extends HTMLElement {
           plan: this.selectedPlan,
           method: this.method,
           customer: {
-            email: this.form.email,
-            phone: this.form.phone
+            email: this.subscription.email,
+            phone: this.subscription.phone
           },
           card: {
             cardName: this.form.cardName,
@@ -596,27 +585,35 @@ class PaymentSimulator extends HTMLElement {
       }
 
       if (!res.ok) {
-        throw new Error(result.message || 'Betalningen misslyckades');
+        throw new Error(t("paymentFailed", this.language));
       }
     } else {
       await new Promise((r) => setTimeout(r, 800));
+
       result = Math.random() > 0.3
-        ? { status: 'success', message: 'Betalningen lyckades' }
-        : { status: 'failed', message: 'Betalningen misslyckades' };
+        ? { status: 'success', message: t("paymentSuccess", this.language) }
+        : { status: 'failed', message: t("paymentFailed", this.language) };
     }
 
     this.status = result.status || 'failed';
-    this.message = result.message || 'Något gick fel';
+    this.message = result.message || t("paymentError", this.language);
+
+    const customerData = { ...this.subscription };
+
+    if (this.status === 'success') {
+      this.subscription = {
+        email: "",
+        phone: "",
+        notificationType: "sms"
+      };
+    }
 
     const eventName = this.status === 'success' ? 'payment-success' : 'payment-failed';
+
     this.dispatchEvent(new CustomEvent(eventName, {
       detail: {
         ...result,
-        customer: {
-          email: this.form.email,
-          phone: this.form.phone,
-          notificationType: this.form.notificationType
-        }
+        customer: customerData
       },
       bubbles: true,
       composed: true
@@ -624,33 +621,39 @@ class PaymentSimulator extends HTMLElement {
   }
 
   // Funktion för att rendera extra fält baserat på vald betalningsmetod
-  renderFields() {
-    if (this.method === 'klarna') {
-      return `
-        ${this.klarnaSession ? `
-          <div id="klarna-container" style="margin-top: 16px;"></div>
-        ` : ''}
-      `;
-    }
-
-    if (this.method === 'card') {
-      return `
-        <input class="input" id="cardName" placeholder="Kortinnehavarens namn" value="${this.form.cardName}">
-        <input class="input" id="cardNumber" placeholder="1234 1234 1234 1234" value="${this.form.cardNumber}">
-        <div class="card-row">
-          <input class="input" id="expiry" placeholder="MM/ÅÅ" value="${this.form.expiry}">
-          <input class="input" id="cvc" placeholder="CVC" value="${this.form.cvc}">
-        </div>
-      `;
-    }
-
-    return '';
+renderFields() {
+  if (this.method === 'klarna') {
+    return `
+      ${this.klarnaSession ? `
+        <div id="klarna-container" style="margin-top: 16px;"></div>
+      ` : ''}
+    `;
   }
+
+  if (this.method === 'card') {
+    return `
+      <input class="input" id="cardName" placeholder="${t("cardHolderName", this.language)}" value="${this.form.cardName}">
+      <input class="input" id="cardNumber" placeholder="1234 1234 1234 1234" value="${this.form.cardNumber}">
+      <div class="card-row">
+        <input class="input" id="expiry" placeholder="${t("expiry", this.language)}" value="${this.form.expiry}">
+        <input class="input" id="cvc" placeholder="CVC" value="${this.form.cvc}">
+      </div>
+    `;
+  }
+
+  return '';
+}
+
   // Funktion för att rendera hela komponenten
   render() {
+    this.language =
+      document.documentElement.lang?.slice(0, 2).toLowerCase() === "en"
+        ? "en"
+        : "sv";
+
     const options = this.plans.map((p) => `
       <option value="${p.id}" ${this.selectedPlan === p.id ? 'selected' : ''}>
-        ${p.name} - ${p.amount} ${p.currency}
+        ${t(p.nameKey, this.language)} - ${p.amount} ${p.currency}
       </option>
     `).join('');
 
@@ -659,65 +662,10 @@ class PaymentSimulator extends HTMLElement {
 
       <div class="card">
 
-        <div class="stepper">
-          <div class="step active">
-            <span class="step-number">1</span>
-            <span>Prenumerera</span>
-          </div>
-          <span>—</span>
-          <div class="step">
-            <span class="step-number">2</span>
-            <span>Betalning</span>
-          </div>
-          <span>—</span>
-          <div class="step">
-            <span class="step-number">3</span>
-            <span>Klart</span>
-          </div>
-        </div>
-
-        <h2 class="title">1. Prenumeration</h2>
-
-        <div class="subscription-box">
-          <h3>Registrera dig</h3>
-          <p>Prenumerationen har ingen bindningstid och du kan när som helst avsluta den genom att kontakta oss via (support/mejl?)</p>
-
-          <input
-            class="input"
-            id="email"
-            type="email"
-            placeholder="Din e-postadress"
-            value="${this.form.email}"
-          >
-
-          <input
-            class="input"
-            id="phone"
-            type="tel"
-            placeholder="Ditt mobilnummer, t.ex. +46701234567"
-            value="${this.form.phone}"
-          >
-
-          <div class="notice-options">
-            <label>
-              <input type="radio" name="notificationType" value="sms" ${this.form.notificationType === 'sms' ? 'checked' : ''}>
-              SMS
-            </label>
-
-            <label>
-              <input type="radio" name="notificationType" value="email" ${this.form.notificationType === 'email' ? 'checked' : ''}>
-              E-post
-            </label>
-
-            <label>
-              <input type="radio" name="notificationType" value="both" ${this.form.notificationType === 'both' ? 'checked' : ''}>
-              SMS & E-post
-            </label>
-          </div>
-        </div>
+        <subscription-form></subscription-form>
 
         <div class="section">
-          <h2 class="title">2. Betalning</h2>
+          <h2 class="title">2. ${t("payment", this.language)}</h2>
 
           <select id="plan" class="select" ${this.status === 'loading' ? 'disabled' : ''}>
             ${options}
@@ -731,7 +679,8 @@ class PaymentSimulator extends HTMLElement {
 
           <label>
             <input type="radio" name="method" value="card" ${this.method === 'card' ? 'checked' : ''}>
-            <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/5/5c/Visa_Inc._logo_%282021%E2%80%93present%29.svg/960px-Visa_Inc._logo_%282021%E2%80%93present%29.svg.png?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=thumbnail" alt="Visa" width="40" /><img src="https://upload.wikimedia.org/wikipedia/commons/thumb/a/a4/Mastercard_2019_logo.svg/120px-Mastercard_2019_logo.svg.png" alt="Mastercard" width="40" />
+            <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/5/5c/Visa_Inc._logo_%282021%E2%80%93present%29.svg/960px-Visa_Inc._logo_%282021%E2%80%93present%29.svg.png?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=thumbnail" alt="Visa" width="40" />
+            <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/a/a4/Mastercard_2019_logo.svg/120px-Mastercard_2019_logo.svg.png" alt="Mastercard" width="40" />
           </label>
         </div>
 
@@ -744,21 +693,21 @@ class PaymentSimulator extends HTMLElement {
             ? '...'
             : this.method === 'klarna'
               ? this.klarnaReady
-                ? 'Slutför Klarna'
-                : 'Betala med Klarna'
-              : 'Betala'}
+                ? t("completeKlarna", this.language)
+                : t("payWithKlarna", this.language)
+              : t("pay", this.language)}
         </button>
 
-        <div class="safe-text">Säker betalning med kryptering</div>
+        <div class="safe-text">${t("securePayment", this.language)}</div>
 
         <div class="status ${this.status === 'success' ? 'success' : 'error'}">
           ${this.message}
         </div>
       </div>
-    </div>
-  `;
+    `;
   }
 }
+
 // Registrera custom elementet om det inte redan är registrerat
 if (!customElements.get('payment-simulator')) {
   customElements.define('payment-simulator', PaymentSimulator);

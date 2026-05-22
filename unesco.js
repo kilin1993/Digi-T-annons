@@ -303,7 +303,6 @@ async function activateAndOpenPayment() {
     const [sites, position] = await Promise.all([
       unescoSites.length ? Promise.resolve(unescoSites) : loadUnescoSites(),
       getUserLocation(),
-      delay(700)
     ]);
 
     unescoSites = sites;
@@ -356,7 +355,6 @@ async function translateCurrentSite(language) {
   try {
     const [translatedText] = await Promise.all([
       translateText(originalDescription, language),
-      delay(700)
     ]);
 
     currentFullDescription = translatedText;
@@ -432,7 +430,6 @@ async function activateNearbyInfo() {
     const [sites, position] = await Promise.all([
       unescoSites.length ? Promise.resolve(unescoSites) : loadUnescoSites(),
       getUserLocation(),
-      delay(700)
     ]);
 
     unescoSites = sites;
@@ -527,7 +524,10 @@ async function createSubscriptionAfterPayment(customer) {
     headers: {
       "Content-Type": "application/json"
     },
-    body: JSON.stringify(customer)
+    body: JSON.stringify({
+      ...customer,
+      language: uiLanguage
+    })
   });
 
   const data = await response.json();
@@ -593,7 +593,7 @@ async function notifyNearbyHeritage(site) {
       "Content-Type": "application/json"
     },
     body: JSON.stringify({
-      subscriptionId: activeSubscription.id,
+      subscriptionId: activeSubscription.subscriptionId,
       site: {
         id: site.id,
         name: site.name,
@@ -636,8 +636,7 @@ if (toggleDescriptionBtn) {
 if (adCard) {
   adCard.addEventListener("click", activateNearbyInfo);
 }
-
-window.addEventListener("load", initUnescoComponent);
+// window.addEventListener("load", initUnescoComponent);
 
 function renderUiLanguage() {
   const kicker = document.querySelector(".popup-kicker");
@@ -694,10 +693,19 @@ if (languageSelect) {
 
     uiLanguage = selectedLanguage === "en" ? "en" : "sv";
 
+    document.documentElement.lang = uiLanguage;
+
     renderUiLanguage();
 
+    const paymentSimulator = document.querySelector("payment-simulator");
+
+    if (paymentSimulator) {
+      paymentSimulator.render();
+      paymentSimulator.bind();
+    }
+
     if (currentNearbySites.length) {
-    renderNearbySites(currentNearbySites);
+      renderNearbySites(currentNearbySites);
     }
 
     await translateCurrentSite(selectedLanguage);
