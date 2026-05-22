@@ -584,7 +584,11 @@ app.post("/api/subscriptions", async (req, res) => {
       channel: "email",
       to: email,
       subject: texts.subscriptionConfirmationSubject,
-      message: texts.subscriptionConfirmationMessage,
+      message:
+    `${texts.subscriptionConfirmationMessage}
+    ${texts.unsubscribeText}
+    http://localhost:${port}/api/subscriptions/cancel?subscriptionId=${subscription.subscriptionId}
+    `,
       user_id: subscription.subscriptionId,
       site_id: "subscription-confirmation"
     });
@@ -601,10 +605,9 @@ app.post("/api/subscriptions", async (req, res) => {
     });
   }
 });
-
-app.post("/api/subscriptions/cancel", async (req, res) => {
+app.get("/api/subscriptions/cancel", async (req, res) => {
   try {
-    const { subscriptionId } = req.body;
+    const { subscriptionId } = req.query;
 
     const subscriptions = await readSubscriptions();
 
@@ -613,31 +616,23 @@ app.post("/api/subscriptions/cancel", async (req, res) => {
     );
 
     if (!subscription) {
-      return res.status(404).json({
-        success: false,
-        error: "not_found"
-      });
+      return res.status(404).send("Prenumerationen hittades inte.");
     }
 
     subscription.active = false;
     await saveSubscriptions(subscriptions);
 
-    return res.json({
-      success: true,
-      subscription
-    });
+    return res.send("Prenumerationen är avslutad.");
   } catch (error) {
     console.error("Cancel subscription error:", error);
-    return res.status(500).json({
-      success: false,
-      error: "server_error"
-    });
+
+    return res.status(500).send("Något gick fel vid avregistrering.");
   }
 });
 
 app.post("/api/subscriptions/notify-nearby", async (req, res) => {
   try {
-    const { subscriptionId, site } = req.body;
+    const { subscriptionId, site } = req.query;
 
     const subscriptions = await readSubscriptions();
 
@@ -677,9 +672,14 @@ app.post("/api/subscriptions/notify-nearby", async (req, res) => {
       await sendNotification({
         channel: "sms",
         to: subscription.phone,
-        message: `Hej! Du är nära världsarvet ${site.name}. Läs mer här: ${site.url || ""}`,
-        user_id: subscription.subscriptionId,
-        site_id: site.id
+        subject: `${texts.nearbyNotificationSubject} ${site.name}`,
+
+        message:
+        `${texts.nearbyNotificationMessage} ${site.name}.
+
+        ${texts.readMoreHere} ${site.url || ""}
+
+        ${texts.unsubscribeContact} digitkonsult@gmail.com`,
       });
     }
 
@@ -687,10 +687,14 @@ app.post("/api/subscriptions/notify-nearby", async (req, res) => {
       await sendNotification({
         channel: "email",
         to: subscription.email,
-        subject: `Du är nära ${site.name}`,
-        message: `Hej! Du är nära världsarvet ${site.name}. Läs mer här: ${site.url || ""}`,
-        user_id: subscription.subscriptionId,
-        site_id: site.id
+        subject: `${texts.nearbyNotificationSubject} ${site.name}`,
+
+        message:
+        `${texts.nearbyNotificationMessage} ${site.name}.
+
+        ${texts.readMoreHere} ${site.url || ""}
+
+        ${texts.unsubscribeContact} digitkonsult@gmail.com`,
       });
     }
 
