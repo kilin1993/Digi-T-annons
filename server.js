@@ -24,6 +24,18 @@ const __dirname = path.dirname(__filename);
 //Pris sätts i konfigurationsfil av kund
 const plans = Object.values(adConfig.pricing);
 
+function getPlanName(plan, language = "sv") {
+  return plan.name || uiTexts[language]?.[plan.nameKey] || uiTexts.sv?.[plan.nameKey] || plan.id;
+}
+
+function getPlanAmountMinor(plan) {
+  return Math.round(Number(plan.amount) * 100);
+}
+
+function getIncludedTaxAmountMinor(amountMinor, taxRate = 2500) {
+  return Math.round(amountMinor - (amountMinor * 10000) / (10000 + taxRate));
+}
+
 // Klarna Playground-konfiguration
 const KLARNA_BASE_URL = process.env.KLARNA_BASE_URL || 'https://api.playground.klarna.com';
 const KLARNA_USERNAME = process.env.KLARNA_USERNAME || '';
@@ -287,24 +299,27 @@ app.post('/klarna/sessions', async (req, res) => {
       return res.status(400).json({ status: 'failed', message: 'Ogiltig plan' });
     }
 
+    const orderAmount = getPlanAmountMinor(selectedPlan);
+    const orderTaxAmount = getIncludedTaxAmountMinor(orderAmount);
+
     const sessionData = {
       acquiring_channel: 'ECOMMERCE',
       intent: 'buy',
       purchase_country: 'SE',
       purchase_currency: 'SEK',
       locale: 'sv-SE',
-      order_amount: selectedPlan.amount * 100,
-      order_tax_amount: Math.round(selectedPlan.amount * 100 * 0.25),
+      order_amount: orderAmount,
+      order_tax_amount: orderTaxAmount,
       order_lines: [
         {
           type: 'physical',
           reference: selectedPlan.id,
-          name: selectedPlan.name,
+          name: getPlanName(selectedPlan),
           quantity: 1,
-          unit_price: selectedPlan.amount * 100,
+          unit_price: orderAmount,
           tax_rate: 2500,
-          total_amount: selectedPlan.amount * 100,
-          total_tax_amount: Math.round(selectedPlan.amount * 100 * 0.25)
+          total_amount: orderAmount,
+          total_tax_amount: orderTaxAmount
         }
       ],
       merchant_urls: {
@@ -337,22 +352,25 @@ app.post('/klarna/orders', async (req, res) => {
       return res.status(400).json({ status: 'failed', message: 'Ogiltig plan' });
     }
 
+    const orderAmount = getPlanAmountMinor(selectedPlan);
+    const orderTaxAmount = getIncludedTaxAmountMinor(orderAmount);
+
     const orderData = {
       purchase_country: 'SE',
       purchase_currency: 'SEK',
       locale: 'sv-SE',
-      order_amount: selectedPlan.amount * 100,
-      order_tax_amount: Math.round(selectedPlan.amount * 100 * 0.25),
+      order_amount: orderAmount,
+      order_tax_amount: orderTaxAmount,
       order_lines: [
         {
           type: 'physical',
           reference: selectedPlan.id,
-          name: selectedPlan.name,
+          name: getPlanName(selectedPlan),
           quantity: 1,
-          unit_price: selectedPlan.amount * 100,
+          unit_price: orderAmount,
           tax_rate: 2500,
-          total_amount: selectedPlan.amount * 100,
-          total_tax_amount: Math.round(selectedPlan.amount * 100 * 0.25)
+          total_amount: orderAmount,
+          total_tax_amount: orderTaxAmount
         }
       ],
       merchant_reference1: `order_${Date.now()}`

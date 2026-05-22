@@ -124,8 +124,26 @@ class SubscriptionForm extends HTMLElement {
     this.bind();
   }
 
+  normalizePhone(phone) {
+    const compactPhone = phone.replace(/[\s-]/g, "");
+
+    if (/^07\d{8}$/.test(compactPhone)) {
+      return `+46${compactPhone.slice(1)}`;
+    }
+
+    if (/^467\d{8}$/.test(compactPhone)) {
+      return `+${compactPhone}`;
+    }
+
+    return compactPhone;
+  }
+
   getData() {
-    return { ...this.form };
+    return {
+      ...this.form,
+      email: this.form.email.trim(),
+      phone: this.normalizePhone(this.form.phone)
+    };
   }
 
   setData(data) {
@@ -148,11 +166,13 @@ validate() {
     return t("emailInvalid", this.language);
   }
 
-  if (!this.form.phone.trim()) {
+  const normalizedPhone = this.normalizePhone(this.form.phone);
+
+  if (!normalizedPhone) {
     return t("phoneRequired", this.language);
   }
 
-  if (!/^\+46\d{9}$/.test(this.form.phone.trim())) {
+  if (!/^\+467\d{8}$/.test(normalizedPhone)) {
     return t("phoneInvalid", this.language);
   }
 

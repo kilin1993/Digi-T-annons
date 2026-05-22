@@ -78,14 +78,14 @@ export const uiTexts = {
     registerTitle: "Registrera dig",
     registerInfo: "Ingen bindningstid. Bekräftelse skickas till din e-post.",
     emailPlaceholder: "Din e-postadress",
-    phonePlaceholder: "Ditt mobilnummer, t.ex. +46701234567",
+    phonePlaceholder: "Ditt mobilnummer, t.ex. 0701234567",
     smsOption: "SMS",
     emailOption: "E-post",
     bothOption: "SMS & E-post",
     emailRequired: "Fyll i e-post",
     emailInvalid: "Fyll i en giltig e-postadress",
     phoneRequired: "Fyll i telefonnummer",
-    phoneInvalid: "Telefonnummer måste ha formatet +46701234567",
+    phoneInvalid: "Telefonnummer måste vara svenskt mobilnummer, t.ex. 0701234567 eller +46701234567",
   },
 
   en: {
@@ -167,14 +167,14 @@ export const uiTexts = {
     registerTitle: "Register",
     registerInfo: "No commitment period. Confirmation will be sent to your email.",
     emailPlaceholder: "Your email address",
-    phonePlaceholder: "Your mobile number, e.g. +46701234567",
+    phonePlaceholder: "Your mobile number, e.g. 0701234567",
     smsOption: "SMS",
     emailOption: "Email",
     bothOption: "SMS & Email",
     emailRequired: "Enter an email address",
     emailInvalid: "Enter a valid email address",
     phoneRequired: "Enter a phone number",
-    phoneInvalid: "Phone number must be in the format +46701234567",
+    phoneInvalid: "Phone number must be in the format 0701234567 or +46701234567",
   }
 };
 

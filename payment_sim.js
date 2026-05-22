@@ -287,7 +287,7 @@ async loadPlans() {
     const subscriptionForm = this.shadowRoot.querySelector("subscription-form");
 
     if (!subscriptionForm || !subscriptionForm.isValid()) {
-      return t("subscriptionDetailsRequired", this.language);
+      return subscriptionForm?.error || t("subscriptionDetailsRequired", this.language);
     }
 
     if (this.method === 'card') {
