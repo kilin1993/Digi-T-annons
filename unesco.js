@@ -594,6 +594,7 @@ async function notifyNearbyHeritage(site) {
     },
     body: JSON.stringify({
       subscriptionId: activeSubscription.subscriptionId,
+      language: uiLanguage,
       site: {
         id: site.id,
         name: site.name,

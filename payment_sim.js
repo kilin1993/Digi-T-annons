@@ -413,8 +413,7 @@ async loadPlans() {
       this.status = 'success';
       this.message = t("klarnaReady", this.language);
       this.klarnaReady = true;
-      this.render();
-      this.bind();
+      this.updateStatusUi();
 
     } catch (error) {
       throw error;
@@ -422,6 +421,25 @@ async loadPlans() {
   }
 
   // Funktion för att ladda Klarna SDK
+  updateStatusUi() {
+    const pay = this.shadowRoot.querySelector('#pay');
+    const status = this.shadowRoot.querySelector('.status');
+
+    if (pay) {
+      pay.disabled = this.status === 'processing';
+      pay.textContent = this.method === 'klarna'
+        ? this.klarnaReady
+          ? t("completeKlarna", this.language)
+          : t("payWithKlarna", this.language)
+        : t("pay", this.language);
+    }
+
+    if (status) {
+      status.className = `status ${this.status === 'success' ? 'success' : 'error'}`;
+      status.textContent = this.message;
+    }
+  }
+
   async loadKlarna() {
     if (window.Klarna) return;
 
