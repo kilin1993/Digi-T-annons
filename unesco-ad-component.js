@@ -1,3 +1,4 @@
+import "./subscription.js";
 import "./payment_sim.js";
 
 const root = document.getElementById("unesco-ad");

@@ -72,7 +72,7 @@ window.openPayment = function () {
   container.classList.remove("hidden");
 
   container.innerHTML = `
-    <payment-simulator mode="api"></payment-simulator>
+    <payment-simulator mode="api" base-url="${API_BASE_URL}"></payment-simulator>
   `;
 };
 

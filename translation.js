@@ -1,9 +1,15 @@
+const API_BASE_URL = window.UNESCO_AD_BASE_URL || window.location.origin;
+
+function apiUrl(path) {
+  return new URL(path, API_BASE_URL).toString();
+}
+
 export async function translateText(text, language) {
   if (!text || !language) {
     throw new Error("Text och språk krävs för översättning.");
   }
 
-  const response = await fetch("/api/translate", {
+  const response = await fetch(apiUrl("/api/translate"), {
     method: "POST",
     headers: {
       "Content-Type": "application/json"

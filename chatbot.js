@@ -3,6 +3,12 @@ export function initChatbot({
   getCurrentDescription,
   getCurrentDistanceKm
 }) {
+  const API_BASE_URL = window.UNESCO_AD_BASE_URL || window.location.origin;
+
+  function apiUrl(path) {
+    return new URL(path, API_BASE_URL).toString();
+  }
+
   const chatbot = document.getElementById("chatbot");
   const chatToggleBtn = document.getElementById("chatToggleBtn");
   const chatForm = document.getElementById("chatForm");
@@ -68,7 +74,7 @@ export function initChatbot({
       return getText("noSite");
     }
 
-    const response = await fetch("/api/chat", {
+    const response = await fetch(apiUrl("/api/chat"), {
       method: "POST",
       headers: {
         "Content-Type": "application/json"
