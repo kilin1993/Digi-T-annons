@@ -164,7 +164,7 @@ export const uiTexts = {
     emailRequired: "Enter an email address",
     emailInvalid: "Enter a valid email address",
     phoneRequired: "Enter a phone number",
-    phoneInvalid: "Phone number must be a Swedish mobile number, e.g. 0701234567 or +46701234567",
+    phoneInvalid: "Phone number must be in the format 0701234567 or +46701234567",
   }
 };
 
