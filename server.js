@@ -16,13 +16,16 @@ const port = process.env.PORT || 3000;
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-//planer för betalningsidan
-/* const plans = [
-  { id: "onetime", name: "Månatlig", amount: 49, currency: "SEK" },
-  { id: "subscription", name: "Årlig", amount: 549, currency: "SEK" }
-]; */
-//Pris sätts i konfigurationsfil av kund
-const plans = Object.values(adConfig.pricing);
+// Hämtar plans från pricing.json
+async function getPlans() {
+  const data = await fs.readFile(
+    path.join(__dirname, "config", "pricing.json"),
+    "utf8"
+  );
+
+  const config = JSON.parse(data);
+  return Object.values(config.pricing);
+}
 
 function getPlanName(plan, language = "sv") {
   return plan.name || uiTexts[language]?.[plan.nameKey] || uiTexts.sv?.[plan.nameKey] || plan.id;
@@ -51,6 +54,31 @@ app.use((req, res, next) => {
   }
 
   next();
+});
+
+app.use("/config", (req, res, next) => {
+  const auth = req.headers.authorization;
+
+  if (!auth) {
+    res.setHeader("WWW-Authenticate", 'Basic realm="Config"');
+    return res.status(401).send("Authentication required");
+  }
+
+  const base64 = auth.split(" ")[1];
+
+  const [username, password] = Buffer.from(base64, "base64")
+    .toString()
+    .split(":");
+
+  if (
+    username === process.env.CONFIG_USERNAME &&
+    password === process.env.CONFIG_PASSWORD
+  ) {
+    return next();
+  }
+
+  res.setHeader("WWW-Authenticate", 'Basic realm="Config"');
+  return res.status(401).send("Wrong credentials");
 });
 
 // Serverar filer direkt från projektets rotmapp
@@ -306,7 +334,8 @@ app.post("/api/chat", async (req, res) => {
 });
 
 // Returnerar betalningsplanerna
-app.get('/plans', (req, res) => {
+app.get('/plans', async (req, res) => {
+  const plans = await getPlans();
   res.json(plans);
 });
 
@@ -314,6 +343,7 @@ app.get('/plans', (req, res) => {
 app.post('/klarna/sessions', async (req, res) => {
   try {
     const { planId, customer } = req.body;
+    const plans = await getPlans();
     const selectedPlan = plans.find((p) => p.id === planId);
 
     if (!selectedPlan) {
@@ -367,6 +397,7 @@ app.post('/klarna/sessions', async (req, res) => {
 app.post('/klarna/orders', async (req, res) => {
   try {
     const { authorization_token, planId } = req.body;
+    const plans = await getPlans();
     const selectedPlan = plans.find((p) => p.id === planId);
 
     if (!selectedPlan) {
@@ -424,6 +455,7 @@ app.post('/payments', async (req, res) => {
     const { email, phone } = customer;
     const { cardName, cardNumber, expiry, cvc } = card;
 
+    const plans = await getPlans();
     const selectedPlan = plans.find((p) => p.id === plan);
 
     if (!selectedPlan) {
@@ -750,6 +782,37 @@ app.post("/api/notification/send", async (req, res) => {
 
 app.get("/api/health", (req, res) => {
   res.json({ status: "ok" });
+});
+
+app.post("/config/pricing", async (req, res) => {
+  console.log("CONFIG BODY:", req.body);
+
+  const { monthly, yearly } = req.body;
+
+  const filePath = path.join(__dirname, "config", "pricing.json");
+
+  console.log("Writing to:", filePath);
+
+  const config = {
+    pricing: {
+      monthly: {
+        id: "monthly",
+        nameKey: "monthly",
+        amount: Number(monthly),
+        currency: "SEK"
+      },
+      yearly: {
+        id: "yearly",
+        nameKey: "yearly",
+        amount: Number(yearly),
+        currency: "SEK"
+      }
+    }
+  };
+
+  await fs.writeFile(filePath, JSON.stringify(config, null, 2));
+
+  res.json({ success: true });
 });
 
 app.listen(port, () => {
