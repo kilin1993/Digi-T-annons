@@ -685,6 +685,20 @@ function renderUiLanguage() {
   if (heroNoticeSubtitle) heroNoticeSubtitle.textContent = t("heroNoticeSubtitle", uiLanguage);
   if (heroRealtimeTitle) heroRealtimeTitle.textContent = t("heroRealtimeTitle", uiLanguage);
   if (heroRealtimeSubtitle) heroRealtimeSubtitle.textContent = t("heroRealtimeSubtitle", uiLanguage);
+
+  const adTitle = document.getElementById("adTitle");
+  const adText = document.getElementById("adText");
+  const adButton = document.getElementById("adButton");
+  const adPopularTitle = document.getElementById("adPopularTitle");
+  const adSite1Country = document.getElementById("adSite1Country");
+  const adSite2Country = document.getElementById("adSite2Country");
+
+  if (adTitle) adTitle.textContent = t("adTitle", uiLanguage);
+  if (adText) adText.textContent = t("adText", uiLanguage);
+  if (adButton) adButton.textContent = t("adButton", uiLanguage);
+  if (adPopularTitle) adPopularTitle.textContent = t("adPopularTitle", uiLanguage);
+  if (adSite1Country) adSite1Country.textContent = t("adSite1Country", uiLanguage);
+  if (adSite2Country) adSite2Country.textContent = t("adSite2Country", uiLanguage);
 }
 
 if (languageSelect) {
