@@ -46,8 +46,6 @@ export const uiTexts = {
     readMoreHere: "Läs mer här:",
     unsubscribeContact: "För att avsluta prenumerationen, kontakta oss på: digitkonsult@gmail.com",
 
-    //Mail-utskick
-
     //payment_sim.js komponent
     securePayment: "Säker betalning med kryptering",
     payWithKlarna: "Betala med Klarna",
@@ -134,8 +132,6 @@ export const uiTexts = {
     nearbyNotificationMessage: "Hello! You are near the World Heritage site",
     readMoreHere: "Read more here:",
     unsubscribeContact: "To unsubscribe, contact us at: digitkonsult@gmail.com",
-
-    //Mail-utskick
     
     //payment_sim.js komponent
     securePayment: "Secure payment with encryption",
