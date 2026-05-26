@@ -4,7 +4,6 @@ import { fileURLToPath } from "url";
 import { sendNotification } from "./notificationService.js";
 import dotenv from "dotenv";
 dotenv.config();
-import { adConfig } from "./ad-config.js";
 import fs from "fs/promises";
 import { uiTexts } from "./i18n.js";
 
