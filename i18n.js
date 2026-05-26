@@ -9,6 +9,8 @@ export const uiTexts = {
     adSite2Country: "Italien",
 
     //Right-content
+    loadingHeritage: "Hämtar världsarv...",
+    loadingNearby: "Letar efter världsarv nära dig...",
     discover: "Upptäck ett UNESCO-världsarv",
     chooseLanguage: "Välj språk",
     translate: "Översätt",
@@ -104,6 +106,8 @@ export const uiTexts = {
     adSite2Country: "Italy",
 
     //Right-content
+    loadingHeritage: "Loading World Heritage Site...",
+    loadingNearby: "Searching for World Heritage Sites near you...",
     discover: "Discover a UNESCO World Heritage Site",
     chooseLanguage: "Choose language",
     translate: "Translate",

@@ -297,8 +297,8 @@ async function activateAndOpenPayment() {
     const title = document.querySelector(".popup-title");
     const text = document.querySelector(".popup-text");
 
-    if (title) title.textContent = "Hämtar världsarv...";
-    if (text) text.textContent = "Letar efter världsarv nära dig...";
+    if (title) title.textContent = t("loadingHeritage", uiLanguage);
+    if (text) text.textContent = t("loadingNearby", uiLanguage);
 
     const [sites, position] = await Promise.all([
       unescoSites.length ? Promise.resolve(unescoSites) : loadUnescoSites(),
@@ -424,8 +424,8 @@ async function activateNearbyInfo() {
     const title = document.querySelector(".popup-title");
     const text = document.querySelector(".popup-text");
 
-    if (title) title.textContent = "Hämtar världsarv...";
-    if (text) text.textContent = "Letar efter världsarv nära dig...";
+    if (title) title.textContent = t("loadingHeritage", uiLanguage);
+    if (text) text.textContent = t("loadingNearby", uiLanguage);
 
     const [sites, position] = await Promise.all([
       unescoSites.length ? Promise.resolve(unescoSites) : loadUnescoSites(),
