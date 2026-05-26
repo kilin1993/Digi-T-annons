@@ -1,0 +1,29 @@
+<h1>Konfiguration</h1>
+
+<label for="monthly">Månadspris (SEK)</label>
+<input id="monthly" type="number">
+
+<label for="yearly">Årspris (SEK)</label>
+<input id="yearly" type="number">
+
+<button id="save">Spara priser</button>
+
+<script>
+document.getElementById("save").onclick = async () => {
+  const monthly = document.getElementById("monthly").value;
+  const yearly = document.getElementById("yearly").value;
+
+  await fetch("/config/pricing", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json"
+    },
+    body: JSON.stringify({
+      monthly,
+      yearly
+    })
+  });
+
+  alert("Sparat!");
+};
+</script>
