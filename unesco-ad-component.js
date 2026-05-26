@@ -14,22 +14,26 @@ if (root) {
 
       <div class="ad-layout">
         <div class="ad-main">
-          <h2>Upptäck världsarv nära dig</h2>
-          <p>Upplev världens vackraste platser med minnesvärda äventyr!</p>
-          <button class="ad-button" type="button">Utforska destinationer →</button>
+          <h2 id="adTitle">Upptäck världsarv nära dig</h2>
+          <p id="adText">
+          Upplev världens vackraste platser med minnesvärda äventyr!
+          </p>
+          <button id="adButton" class="ad-button" type="button">
+          Utforska destinationer →
+          </button>
         </div>
 
         <div class="ad-sites">
-          <h3>Populära världsarv</h3>
+          <h3 id="adPopularTitle">Populära världsarv</h3>
 
           <div class="ad-site">
-            <strong>Geirangerfjord</strong>
-            <span>Norge</span>
+          <strong>Geirangerfjord</strong>
+          <span id="adSite1Country">Norge</span>
           </div>
 
           <div class="ad-site">
             <strong>Colosseum</strong>
-            <span>Italien</span>
+            <span id="adSite2Country">Italien</span>
           </div>
 
           <div class="ad-site">

@@ -1,5 +1,13 @@
 export const uiTexts = {
   sv: {
+    //Första annonsyta
+    adTitle: "Upptäck världsarv nära dig",
+    adText: "Upplev världens vackraste platser med minnesvärda äventyr!",
+    adButton: "Utforska destinationer →",
+    adPopularTitle: "Populära världsarv",
+    adSite1Country: "Norge",
+    adSite2Country: "Italien",
+
     //Right-content
     discover: "Upptäck ett UNESCO-världsarv",
     chooseLanguage: "Välj språk",
@@ -87,6 +95,14 @@ export const uiTexts = {
   },
 
   en: {
+    //Första annonsyta 
+    adTitle: "Discover World Heritage Sites near you",
+    adText: "Experience the world's most beautiful places through memorable adventures!",
+    adButton: "Explore destinations →",
+    adPopularTitle: "Popular World Heritage Sites",
+    adSite1Country: "Norway",
+    adSite2Country: "Italy",
+
     //Right-content
     discover: "Discover a UNESCO World Heritage Site",
     chooseLanguage: "Choose language",
