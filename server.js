@@ -44,7 +44,7 @@ const KLARNA_USERNAME = process.env.KLARNA_USERNAME || '';
 const KLARNA_PASSWORD = process.env.KLARNA_PASSWORD || '';
 
 app.use((req, res, next) => {
-  res.setHeader("Access-Control-Allow-Origin", process.env.CORS_ORIGIN || "*");
+  res.setHeader("Access-Control-Allow-Origin", "*");
   res.setHeader("Access-Control-Allow-Methods", "GET,POST,OPTIONS");
   res.setHeader("Access-Control-Allow-Headers", "Content-Type,Authorization");
 
