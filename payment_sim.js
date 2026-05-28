@@ -431,6 +431,7 @@ async loadPlans() {
     }
   }
 
+  // https://docs.klarna.com/acquirer/klarna/sign-in-with-klarna/integrate-sign-in-with-klarna/web-sdk-integration/
   async loadKlarna() {
     if (window.Klarna) return;
 
