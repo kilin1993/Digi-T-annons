@@ -706,6 +706,9 @@ app.post("/api/subscriptions/notify-nearby", async (req, res) => {
       });
     }
 
+    const unsubscribeUrl =
+      `${getPublicBaseUrl(req)}/api/subscriptions/cancel?subscriptionId=${subscription.subscriptionId}`;
+
     if (!site || !site.id || !site.name) {
       return res.status(400).json({
         success: false,
@@ -725,35 +728,41 @@ app.post("/api/subscriptions/notify-nearby", async (req, res) => {
       });
     }
 
-    if (subscription.notificationType === "sms" || subscription.notificationType === "both") {
+    if (
+      subscription.notificationType === "sms" ||
+      subscription.notificationType === "both"
+    ) {
       await sendNotification({
         channel: "sms",
         to: subscription.phone,
         subject: `${texts.nearbyNotificationSubject} ${site.name}`,
-
         message:
-        `${texts.nearbyNotificationMessage} ${site.name}.
+`${texts.nearbyNotificationMessage} ${site.name}.
 
-        ${texts.readMoreHere} ${site.url || ""}
+${texts.readMoreHere} ${site.url || ""}
 
-        ${texts.unsubscribeContact} digitkonsult@gmail.com`,
+${texts.unsubscribeText}
+${unsubscribeUrl}`,
         user_id: subscription.subscriptionId,
         site_id: site.id
       });
     }
 
-    if (subscription.notificationType === "email" || subscription.notificationType === "both") {
+    if (
+      subscription.notificationType === "email" ||
+      subscription.notificationType === "both"
+    ) {
       await sendNotification({
         channel: "email",
         to: subscription.email,
         subject: `${texts.nearbyNotificationSubject} ${site.name}`,
-
         message:
-        `${texts.nearbyNotificationMessage} ${site.name}.
+`${texts.nearbyNotificationMessage} ${site.name}.
 
-        ${texts.readMoreHere} ${site.url || ""}
+${texts.readMoreHere} ${site.url || ""}
 
-        ${texts.unsubscribeContact} digitkonsult@gmail.com`,
+${texts.unsubscribeText}
+${unsubscribeUrl}`,
         user_id: subscription.subscriptionId,
         site_id: site.id
       });
