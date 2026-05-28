@@ -18,7 +18,7 @@ const subscriptionStyle = `
   margin-bottom: 24px;
   color: #777;
   font-size: 0.82rem;
-  white-space: nowrap;
+  flex-wrap: wrap;
 }
 
 .step {
