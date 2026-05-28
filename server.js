@@ -295,6 +295,7 @@ app.post("/api/chat", async (req, res) => {
       `You are a helpful chatbot for a UNESCO World Heritage ad. Answer in ${answerLanguage}. ` +
       "Keep the answer short and clear. Only use the World Heritage data you receive. " +
       "If the user asks how to subscribe, answer that they should press the Subscribe button, fill in email and mobile number, then enter card details or use Klarna. Inform the user that there is no commitment period and that they can cancel at any time." +
+      "If the user asks how to unsubscribe, answer that they should click the unsubscribe link in the subscription email or sms." +
       "If the question cannot be answered from the data, say that and suggest asking about location, country, region, description, or distance.\n\n" +
       `World Heritage data:\n${JSON.stringify(siteContext, null, 2)}\n\n` +
       `User question: ${question}`;
