@@ -39,7 +39,7 @@ let currentNearbySites = [];
 
 let activeSubscription = null;
 let locationWatchId = null;
-const NOTIFY_RADIUS_KM = 5;
+const NOTIFY_RADIUS_KM = 500;
 
 let uiLanguage = getPageLanguage();
 

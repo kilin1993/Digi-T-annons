@@ -1,5 +1,11 @@
 import nodemailer from "nodemailer";
 
+import dotenv from "dotenv";
+dotenv.config();
+
+const EXTERNAL_NOTIFICATION_ENDPOINT =
+  process.env.EXTERNAL_NOTIFICATION_ENDPOINT;
+
 const cooldownMap = new Map();
 const COOLDOWN_MS = 60 * 60 * 1000;
 
@@ -89,6 +95,21 @@ async function sendEmail({ to, subject, message }) {
 
 export async function sendNotification(data) {
   const { channel, to, message, subject, user_id, site_id } = data;
+
+  if (EXTERNAL_NOTIFICATION_ENDPOINT) {
+    const response = await fetch(EXTERNAL_NOTIFICATION_ENDPOINT, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify(data)
+    });
+
+    return {
+      status: response.status,
+      body: await response.json()
+    };
+  }
 
   if (!["sms", "email"].includes(channel)) {
     return {
