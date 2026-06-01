@@ -1,9 +1,9 @@
-const BASE_URL = "https://DIN-ENDPOINT.trycloudflare.com";
+const BASE_URL = "";
 
 async function testSms() {
   try {
     const response = await fetch(
-      `${BASE_URL}/api/notification/send`,
+      `${BASE_URL}`,
       {
         method: "POST",
         headers: {
@@ -11,7 +11,7 @@ async function testSms() {
         },
         body: JSON.stringify({
           channel: "sms",
-          to: "+46701234567",
+          to: "+46736543858",
           message: "Test-SMS från extern klient",
           user_id: "1",
           site_id: "unesco-test"
@@ -32,7 +32,7 @@ async function testSms() {
 async function testEmail() {
   try {
     const response = await fetch(
-      `${BASE_URL}/api/notification/send`,
+      `${BASE_URL}`,
       {
         method: "POST",
         headers: {
@@ -40,7 +40,7 @@ async function testEmail() {
         },
         body: JSON.stringify({
           channel: "email",
-          to: "dinmail@test.se",
+          to: "kimberly_linder@hotmail.com",
           subject: "Testmail",
           message: "Test-email från extern klient",
           user_id: "1",

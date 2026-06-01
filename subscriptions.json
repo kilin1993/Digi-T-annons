@@ -40,5 +40,27 @@
     "active": true,
     "sentSiteIds": [],
     "created_at": "2026-05-26T07:42:53.956Z"
+  },
+  {
+    "subscriptionId": 7,
+    "email": "Kimberly_linder@hotmail.com",
+    "phone": "+46736543858",
+    "notificationType": "sms",
+    "active": true,
+    "sentSiteIds": [
+      "1027"
+    ],
+    "created_at": "2026-06-01T06:26:43.684Z"
+  },
+  {
+    "subscriptionId": 8,
+    "email": "erika.danielsson@live.se",
+    "phone": "+46739241153",
+    "notificationType": "sms",
+    "active": true,
+    "sentSiteIds": [
+      "1027"
+    ],
+    "created_at": "2026-06-01T07:13:52.119Z"
   }
 ]
