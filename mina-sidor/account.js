@@ -146,7 +146,7 @@ function renderSubscription(subscription) {
     formatDate(subscription.created_at);
 
   document.getElementById("owntracksUrl").textContent =
-    `${API_BASE_URL}/api/location/owntracks`;
+    `${API_BASE_URL}/api/location`;
 }
 
 function setupLogout() {
