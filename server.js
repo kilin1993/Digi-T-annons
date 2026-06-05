@@ -641,16 +641,14 @@ app.post("/api/subscriptions", async (req, res) => {
       email,
       phone,
       notificationType,
-      planId: planId || "standard",
       active: true,
       sentSiteIds: [],
+      lastNotifiedSiteId: null,
       created_at: new Date().toISOString()
     };
 
     subscriptions.push(subscription);
     await saveSubscriptions(subscriptions);
-
-    const unsubscribeUrl = `${getPublicBaseUrl(req)}/api/subscriptions/cancel?subscriptionId=${subscription.subscriptionId}`;
 
     const accountUrl =
       `${getPublicBaseUrl(req)}/mina-sidor/account.html?subscriptionId=${subscription.subscriptionId}`;
@@ -664,8 +662,6 @@ app.post("/api/subscriptions", async (req, res) => {
 
     Min sida:
     ${accountUrl}
-    ${texts.unsubscribeText}
-    ${unsubscribeUrl}
     `,
       user_id: subscription.subscriptionId,
       site_id: "subscription-confirmation"
@@ -761,8 +757,6 @@ app.post("/api/subscriptions/notify-nearby", async (req, res) => {
       });
     }
 
-    const unsubscribeUrl =
-  `${getPublicBaseUrl(req)}/api/subscriptions/cancel?subscriptionId=${subscription.subscriptionId}`;
 
     const accountUrl =
   `${getPublicBaseUrl(req)}/mina-sidor/account.html?subscriptionId=${subscription.subscriptionId}`;
@@ -787,59 +781,50 @@ app.post("/api/subscriptions/notify-nearby", async (req, res) => {
     }
 
     if (
-      subscription.notificationType === "sms" ||
-      subscription.notificationType === "both"
-    ) {
-      await sendNotification({
-        channel: "sms",
-        to: subscription.phone,
-        subject: `${texts.nearbyNotificationSubject} ${site.name}`,
-        message:
-        `${texts.nearbyNotificationMessage} ${site.name}.
+  subscription.notificationType === "sms" ||
+  subscription.notificationType === "both"
+) {
+  await sendNotification({
+    channel: "sms",
+    to: subscription.phone,
+    subject: `${texts.nearbyNotificationSubject} ${site.name}`,
+    message:
+`${texts.nearbyNotificationMessage} ${site.name}.
 
-        ${texts.readMoreHere} ${site.url || ""}
+Min sida:
+${accountUrl}`,
+    user_id: subscription.subscriptionId,
+    site_id: site.id
+  });
+}
 
-        Min sida:
-        ${accountUrl}
+if (
+  subscription.notificationType === "email" ||
+  subscription.notificationType === "both"
+) {
+  await sendNotification({
+    channel: "email",
+    to: subscription.email,
+    subject: `${texts.nearbyNotificationSubject} ${site.name}`,
+    message:
+`${texts.nearbyNotificationMessage} ${site.name}.
 
-        ${texts.unsubscribeText}
-        ${unsubscribeUrl}`,
-                user_id: subscription.subscriptionId,
-                site_id: site.id
-              });
-            }
+Min sida:
+${accountUrl}`,
+    user_id: subscription.subscriptionId,
+    site_id: site.id
+  });
+}
 
-    if (
-      subscription.notificationType === "email" ||
-      subscription.notificationType === "both"
-    ) {
-      await sendNotification({
-        channel: "email",
-        to: subscription.email,
-        subject: `${texts.nearbyNotificationSubject} ${site.name}`,
-        message: 
-        `${texts.nearbyNotificationMessage} ${site.name}.
+subscription.sentSiteIds.push(site.id);
+await saveSubscriptions(subscriptions);
 
-        ${texts.readMoreHere} ${site.url || ""}
-
-        Min sida:
-        ${accountUrl}
-
-        ${texts.unsubscribeText}
-        ${unsubscribeUrl}`,
-                user_id: subscription.subscriptionId,
-                site_id: site.id
-              });
-            }
-
-    subscription.sentSiteIds.push(site.id);
-    await saveSubscriptions(subscriptions);
-
-    return res.json({
-      success: true
-    });
-  } catch (error) {
+return res.json({
+  success: true
+});
+} catch (error) {
     console.error("Nearby notification error:", error);
+
     return res.status(500).json({
       success: false,
       error: "server_error"
@@ -1006,6 +991,7 @@ app.post("/api/location", async (req, res) => {
     );
 
     const closestSite = nearbySites[0];
+    
 
     if (!closestSite) {
       return res.status(200).json({
@@ -1026,7 +1012,6 @@ app.post("/api/location", async (req, res) => {
     const notificationMessage =
       `${texts.nearbyNotificationMessage} ${closestSite.name}.
 
-      ${texts.readMoreHere} ${closestSite.url || ""}
 
       ${texts.unsubscribeText}
       ${unsubscribeUrl}`;
