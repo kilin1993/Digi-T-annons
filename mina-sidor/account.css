@@ -59,23 +59,74 @@
     color: #12352f;
   }
   
-  .account-chat-messages {
-    min-height: 180px;
-    max-height: 300px;
-    overflow-y: auto;
-    border: 1px solid #d7ddd9;
-    border-radius: 14px;
-    padding: 14px;
-    margin-bottom: 14px;
-    background: #fafdfb;
+  #chatbot {
+    background: white;
+    border: 1px solid #e2e8e4;
+    border-radius: 20px;
+    padding: 24px;
+    margin-bottom: 18px;
+    box-shadow: 0 8px 20px rgba(0,0,0,0.05);
   }
   
-  .account-chat-form {
+  .chatbot-title {
+    font-size: 1.5rem;
+    font-weight: 800;
+    color: #12352f;
+    margin-bottom: 6px;
+  }
+  
+  .chatbot-subtitle {
+    color: #5f6b65;
+    margin-bottom: 18px;
+  }
+  
+  .chatbot-body {
+    display: grid;
+    gap: 14px;
+  }
+  
+  .chat-messages {
+    min-height: 190px;
+    max-height: 320px;
+    overflow-y: auto;
+    border: 1px solid #d7ddd9;
+    border-radius: 16px;
+    padding: 16px;
+    background: #fafdfb;
+  
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+  
+  .chat-message {
+    max-width: 82%;
+    padding: 11px 14px;
+    border-radius: 14px;
+    line-height: 1.4;
+    font-size: 15px;
+  }
+  
+  .chat-message.bot {
+    align-self: flex-start;
+    background: #eef5f0;
+    color: #12352f;
+    border-bottom-left-radius: 4px;
+  }
+  
+  .chat-message.user {
+    align-self: flex-end;
+    background: #0f5132;
+    color: white;
+    border-bottom-right-radius: 4px;
+  }
+  
+  .chat-form {
     display: flex;
     gap: 10px;
   }
   
-  .account-chat-form input {
+  .chat-form input {
     flex: 1;
     height: 48px;
     padding: 0 14px;
@@ -84,7 +135,13 @@
     font-size: 15px;
   }
   
-  .account-chat-form button {
+  .chat-form input:focus {
+    outline: none;
+    border-color: #0f5132;
+    box-shadow: 0 0 0 3px rgba(15, 81, 50, 0.12);
+  }
+  
+  .chat-form button {
     background: #0f5132;
     color: white;
     border: none;
@@ -94,7 +151,7 @@
     cursor: pointer;
   }
   
-  .account-chat-form button:hover {
+  .chat-form button:hover {
     background: #18794e;
   }
   
@@ -164,12 +221,16 @@
       padding: 18px;
     }
   
-    .account-chat-form {
+    .chat-form {
       flex-direction: column;
     }
   
-    .account-chat-form button {
+    .chat-form button {
       height: 48px;
+    }
+  
+    .chat-message {
+      max-width: 95%;
     }
     
   }

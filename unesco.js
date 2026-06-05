@@ -763,5 +763,8 @@ document.addEventListener("payment-success", async (event) => {
     return;
   }
 
-  await createSubscriptionAfterPayment(customer);
+  await createSubscriptionAfterPayment({
+    ...customer,
+    planId: event.detail.planId
+  });
 });

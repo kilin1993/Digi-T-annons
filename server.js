@@ -603,7 +603,7 @@ async function saveSubscriptions(subscriptions) {
 
 app.post("/api/subscriptions", async (req, res) => {
   try {
-    const { email, phone, notificationType, language } = req.body;
+    const { email, phone, notificationType, language, planId } = req.body;
     const messageLanguage = language === "en" ? "en" : "sv";
     const texts = uiTexts[messageLanguage];
 
@@ -641,6 +641,7 @@ app.post("/api/subscriptions", async (req, res) => {
       email,
       phone,
       notificationType,
+      planId: planId || "standard",
       active: true,
       sentSiteIds: [],
       created_at: new Date().toISOString()
@@ -651,12 +652,18 @@ app.post("/api/subscriptions", async (req, res) => {
 
     const unsubscribeUrl = `${getPublicBaseUrl(req)}/api/subscriptions/cancel?subscriptionId=${subscription.subscriptionId}`;
 
+    const accountUrl =
+      `${getPublicBaseUrl(req)}/mina-sidor/account.html?subscriptionId=${subscription.subscriptionId}`;
+
     await sendNotification({
       channel: "email",
       to: email,
       subject: texts.subscriptionConfirmationSubject,
       message:
     `${texts.subscriptionConfirmationMessage}
+
+    Min sida:
+    ${accountUrl}
     ${texts.unsubscribeText}
     ${unsubscribeUrl}
     `,
@@ -670,6 +677,37 @@ app.post("/api/subscriptions", async (req, res) => {
     });
   } catch (error) {
     console.error("Subscription error:", error);
+    return res.status(500).json({
+      success: false,
+      error: "server_error"
+    });
+  }
+});
+
+app.get("/api/account/:subscriptionId", async (req, res) => {
+  try {
+    const { subscriptionId } = req.params;
+
+    const subscriptions = await readSubscriptions();
+
+    const subscription = subscriptions.find(
+      (sub) => String(sub.subscriptionId) === String(subscriptionId)
+    );
+
+    if (!subscription) {
+      return res.status(404).json({
+        success: false,
+        error: "subscription_not_found"
+      });
+    }
+
+    return res.json({
+      success: true,
+      subscription
+    });
+  } catch (error) {
+    console.error("Account subscription error:", error);
+
     return res.status(500).json({
       success: false,
       error: "server_error"
@@ -724,8 +762,11 @@ app.post("/api/subscriptions/notify-nearby", async (req, res) => {
     }
 
     const unsubscribeUrl =
-      `${getPublicBaseUrl(req)}/api/subscriptions/cancel?subscriptionId=${subscription.subscriptionId}`;
+  `${getPublicBaseUrl(req)}/api/subscriptions/cancel?subscriptionId=${subscription.subscriptionId}`;
 
+    const accountUrl =
+  `${getPublicBaseUrl(req)}/mina-sidor/account.html?subscriptionId=${subscription.subscriptionId}`;
+  
     if (!site || !site.id || !site.name) {
       return res.status(400).json({
         success: false,
@@ -758,12 +799,15 @@ app.post("/api/subscriptions/notify-nearby", async (req, res) => {
 
         ${texts.readMoreHere} ${site.url || ""}
 
+        Min sida:
+        ${accountUrl}
+
         ${texts.unsubscribeText}
         ${unsubscribeUrl}`,
                 user_id: subscription.subscriptionId,
                 site_id: site.id
               });
-    }
+            }
 
     if (
       subscription.notificationType === "email" ||
@@ -774,16 +818,19 @@ app.post("/api/subscriptions/notify-nearby", async (req, res) => {
         to: subscription.email,
         subject: `${texts.nearbyNotificationSubject} ${site.name}`,
         message:
-`${texts.nearbyNotificationMessage} ${site.name}.
+          `${texts.nearbyNotificationMessage} ${site.name}.
 
-${texts.readMoreHere} ${site.url || ""}
+          ${texts.readMoreHere} ${site.url || ""}
 
-${texts.unsubscribeText}
-${unsubscribeUrl}`,
-        user_id: subscription.subscriptionId,
-        site_id: site.id
-      });
-    }
+          Min sida:
+          ${accountUrl}
+
+          ${texts.unsubscribeText}
+          ${unsubscribeUrl}`,
+                  user_id: subscription.subscriptionId,
+                  site_id: site.id
+                });
+              }
 
     subscription.sentSiteIds.push(site.id);
     await saveSubscriptions(subscriptions);

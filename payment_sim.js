@@ -535,6 +535,7 @@ async loadPlans() {
                 detail: {
                   order_id: orderData.order_id,
                   method: 'klarna',
+                  planId: this.selectedPlan,
                   customer: customerData
                 },
                 bubbles: true,
@@ -623,6 +624,7 @@ async loadPlans() {
     this.dispatchEvent(new CustomEvent(eventName, {
       detail: {
         ...result,
+        planId: this.selectedPlan,
         customer: customerData
       },
       bubbles: true,
