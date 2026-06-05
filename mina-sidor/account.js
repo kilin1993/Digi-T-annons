@@ -1,3 +1,4 @@
+import { initChatbot } from "../chatbot.js";
 
 const API_BASE_URL = window.location.origin;
 
@@ -5,17 +6,95 @@ function apiUrl(path) {
   return new URL(path, API_BASE_URL).toString();
 }
 
-function getActiveSubscription() {
-  const storedSubscription = localStorage.getItem("activeSubscription");
+function getSubscriptionIdFromUrl() {
+  const params = new URLSearchParams(window.location.search);
+  return params.get("subscriptionId");
+}
 
-  if (!storedSubscription) {
-    return null;
+async function loadSubscriptionFromServer(subscriptionId) {
+  const response = await fetch(
+    apiUrl(`/api/account/${subscriptionId}`)
+  );
+
+  const data = await response.json();
+
+  if (!response.ok) {
+    throw new Error(data.error || "subscription_not_found");
   }
 
+  return data.subscription;
+}
+
+let currentSite = null;
+let currentDistanceKm = null;
+
+async function loadUnescoSites() {
+  const response = await fetch(apiUrl("/api/unesco/sites"));
+  return response.json();
+}
+
+function getUserLocation() {
+  return new Promise((resolve, reject) => {
+    if (!navigator.geolocation) {
+      reject(new Error("Geolocation not supported"));
+      return;
+    }
+
+    navigator.geolocation.getCurrentPosition(
+      ({ coords }) => resolve({
+        latitude: coords.latitude,
+        longitude: coords.longitude
+      }),
+      reject,
+      { timeout: 8000 }
+    );
+  });
+}
+
+const toRadians = (value) => (value * Math.PI) / 180;
+
+function getDistanceKm(lat1, lon1, lat2, lon2) {
+  const R = 6371;
+  const dLat = toRadians(lat2 - lat1);
+  const dLon = toRadians(lon2 - lon1);
+
+  const a =
+    Math.sin(dLat / 2) ** 2 +
+    Math.cos(toRadians(lat1)) *
+    Math.cos(toRadians(lat2)) *
+    Math.sin(dLon / 2) ** 2;
+
+  return 2 * R * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+}
+
+function findNearestSite(position, sites) {
+  return sites
+    .filter(site => site.latitude != null && site.longitude != null)
+    .map(site => ({
+      ...site,
+      distanceKm: getDistanceKm(
+        position.latitude,
+        position.longitude,
+        Number(site.latitude),
+        Number(site.longitude)
+      )
+    }))
+    .sort((a, b) => a.distanceKm - b.distanceKm)[0];
+}
+
+async function loadNearestSiteForChatbot() {
   try {
-    return JSON.parse(storedSubscription);
-  } catch {
-    return null;
+    const [sites, position] = await Promise.all([
+      loadUnescoSites(),
+      getUserLocation()
+    ]);
+
+    currentSite = findNearestSite(position, sites);
+    currentDistanceKm = currentSite?.distanceKm ?? null;
+  } catch (error) {
+    console.error("Nearest site error:", error);
+    currentSite = null;
+    currentDistanceKm = null;
   }
 }
 
@@ -24,6 +103,14 @@ function formatNotificationType(type) {
   if (type === "email") return "E-post";
   if (type === "both") return "SMS och e-post";
   return "Ej angivet";
+}
+
+function formatPlan(planId) {
+  if (planId === "onetime") return "Månatlig";
+  if (planId === "subscription") return "Årlig";
+  if (planId === "monthly") return "Månatlig";
+  if (planId === "yearly") return "Årlig";
+  return planId || "Ej angivet";
 }
 
 function formatDate(dateString) {
@@ -49,6 +136,9 @@ function renderSubscription(subscription) {
   document.getElementById("notificationType").textContent =
     formatNotificationType(subscription.notificationType);
 
+  document.getElementById("planId").textContent =
+    formatPlan(subscription.planId);
+  
   document.getElementById("owntracksUserId").textContent =
     subscription.subscriptionId || "Ej angivet";
 
@@ -57,71 +147,6 @@ function renderSubscription(subscription) {
 
   document.getElementById("owntracksUrl").textContent =
     `${API_BASE_URL}/api/location/owntracks`;
-}
-
-function addMessage(text, sender = "bot") {
-  const chatMessages = document.getElementById("chatMessages");
-
-  const message = document.createElement("div");
-  message.className = `account-chat-message ${sender}`;
-  message.textContent = text;
-
-  chatMessages.appendChild(message);
-  chatMessages.scrollTop = chatMessages.scrollHeight;
-}
-
-function setupChatbot(subscription) {
-  const chatForm = document.getElementById("chatForm");
-  const chatInput = document.getElementById("chatInput");
-
-  addMessage("Hej! Jag är din UNESCO-assistent. Ställ gärna en fråga.");
-
-  chatForm.addEventListener("submit", async (event) => {
-    event.preventDefault();
-
-    const question = chatInput.value.trim();
-
-    if (!question) return;
-
-    addMessage(question, "user");
-    chatInput.value = "";
-
-    addMessage("Tänker...", "bot");
-
-    try {
-      const response = await fetch(apiUrl("/api/chat"), {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json"
-        },
-        body: JSON.stringify({
-          question,
-          site: {
-            name: "UNESCO World Heritage",
-            country: "",
-            region: "",
-            shortDescription:
-              "Användaren är prenumerant på UNESCO-notiser.",
-            description:
-              "Användaren är prenumerant på UNESCO-notiser."
-          },
-          description:
-            "Användaren är prenumerant på UNESCO-notiser.",
-          distanceKm: null,
-          language: "sv"
-        })
-      });
-
-      const data = await response.json();
-
-      chatMessages.lastElementChild.textContent =
-        data.answer || "Jag kunde inte svara just nu.";
-    } catch (error) {
-      console.error("Chat error:", error);
-      chatMessages.lastElementChild.textContent =
-        "Chatten kunde inte svara just nu.";
-    }
-  });
 }
 
 function setupLogout() {
@@ -172,19 +197,52 @@ function setupCancelSubscription(subscription) {
   });
 }
 
-function initAccountPage() {
-  const subscription = getActiveSubscription();
+function setupAccountChatbot() {
+  const chatbot = initChatbot({
+    getCurrentSite: () => currentSite,
+    getCurrentDescription: () =>
+      currentSite?.description ||
+      currentSite?.shortDescription ||
+      "",
+    getCurrentDistanceKm: () => currentDistanceKm
+  });
 
-  if (!subscription) {
-    alert("Ingen aktiv prenumeration hittades.");
+  if (currentSite) {
+    chatbot.reset(currentSite);
+  }
+}
+
+async function initAccountPage() {
+  const subscriptionId = getSubscriptionIdFromUrl();
+
+  if (!subscriptionId) {
+    alert("Ingen prenumeration angiven.");
     window.location.href = "/";
     return;
   }
 
-  renderSubscription(subscription);
-  setupChatbot(subscription);
-  setupLogout();
-  setupCancelSubscription(subscription);
+
+  try {
+    const subscription = await loadSubscriptionFromServer(subscriptionId);
+
+    localStorage.setItem(
+      "activeSubscription",
+      JSON.stringify(subscription)
+    );
+
+    renderSubscription(subscription);
+
+    await loadNearestSiteForChatbot();
+
+    setupAccountChatbot();
+    setupLogout();
+    setupCancelSubscription(subscription);
+  } catch (error) {
+    console.error("Account load error:", error);
+    alert("Prenumerationen kunde inte hittas.");
+    window.location.href = "/";
+  }
 }
+
 
 initAccountPage();

@@ -666,10 +666,6 @@ button {
     box-shadow: 0 20px 50px rgba(0,0,0,0.3);
     min-height: 200px;
   }
-
-  /* account style */
-
-  
   /* Responsivt */
   @media (max-width: 900px) {
     .popup {

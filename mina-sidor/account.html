@@ -33,29 +33,28 @@
       <p><strong>E-post:</strong> <span id="email"></span></p>
       <p><strong>Telefon:</strong> <span id="phone"></span></p>
       <p><strong>Notifieringar:</strong> <span id="notificationType"></span></p>
-      <p><strong>Betalningsplan:</strong> <span id="plan"></span></p>
+      <p><strong>Betalningsplan:</strong> <span id="planId"></span></p>
       <p><strong>Radie:</strong> <span id="radiusKm"></span></p>
       <p><strong>Registrerad:</strong> <span id="createdAt"></span></p>
     </section>
 
-    <section class="account-card">
-      <h2>UNESCO-assistent</h2>
-      <p>
-        Ställ frågor om UNESCO-världsarv, prenumerationen eller platser
-        du har fått notifieringar om.
-      </p>
-
-      <div id="chatMessages" class="account-chat-messages"></div>
-
-      <form id="chatForm" class="account-chat-form">
-        <input
-          id="chatInput"
-          type="text"
-          placeholder="Ställ en fråga..."
-          autocomplete="off"
-        >
-        <button type="submit">Skicka</button>
-      </form>
+    <section id="chatbot" class="chatbot">
+      <div class="chatbot-title">UNESCO-assistent</div>
+      <div class="chatbot-subtitle">Fråga om närmaste världsarv.</div>
+    
+      <div class="chatbot-body">
+        <div id="chatMessages" class="chat-messages"></div>
+    
+        <form id="chatForm" class="chat-form">
+          <input
+            id="chatInput"
+            type="text"
+            autocomplete="off"
+            placeholder="Ställ en fråga..."
+          >
+          <button class="primary" type="submit">Skicka</button>
+        </form>
+      </div>
     </section>
 
     <section class="account-card">
