@@ -149,6 +149,27 @@ function renderSubscription(subscription) {
     `${API_BASE_URL}/api/location`;
 }
 
+function renderNearestSite() {
+  if (!currentSite) return;
+
+  document.getElementById("siteName").textContent =
+    currentSite.name;
+
+  document.getElementById("siteCountry").textContent =
+    currentSite.country || "Okänt";
+
+
+  document.getElementById("siteDistance").textContent =
+    `${Math.round(currentDistanceKm)} km`;
+
+  document.getElementById("siteDescription").textContent =
+    currentSite.description ||
+    "";
+
+  document.getElementById("siteLink").href =
+    currentSite.url;
+}
+
 function setupLogout() {
   const logoutButton = document.getElementById("logoutButton");
 
@@ -263,6 +284,8 @@ async function initAccountPage() {
 
     if (subscription.active !== false) {
       await loadNearestSiteForChatbot();
+
+      renderNearestSite();
       setupAccountChatbot();
 }
   } catch (error) {
@@ -271,6 +294,8 @@ async function initAccountPage() {
     window.location.href = "/";
   }
 }
+
+
 
 
 initAccountPage();
