@@ -242,7 +242,7 @@ async function generateGeminiAnswer({ prompt, model }) {
         }
       ],
       generationConfig: {
-        maxOutputTokens: 220,
+        maxOutputTokens: 500,
         temperature: 0.4
       }
     })
@@ -614,7 +614,22 @@ app.post("/api/subscriptions", async (req, res) => {
       });
     }
 
+    const normalizedEmail = email.trim().toLowerCase();
+
     const subscriptions = await readSubscriptions();
+
+    const existingSubscription = subscriptions.find((sub) =>
+      sub.active !== false &&
+      sub.email &&
+      sub.email.trim().toLowerCase() === normalizedEmail
+    );
+
+    if (existingSubscription) {
+      return res.status(409).json({
+        success: false,
+        error: "email_already_registered"
+      });
+    }
 
     const nextId =
       subscriptions.length > 0
@@ -661,6 +676,7 @@ app.post("/api/subscriptions", async (req, res) => {
     });
   }
 });
+
 app.get("/api/subscriptions/cancel", async (req, res) => {
   try {
     const { subscriptionId } = req.query;
@@ -738,15 +754,15 @@ app.post("/api/subscriptions/notify-nearby", async (req, res) => {
         to: subscription.phone,
         subject: `${texts.nearbyNotificationSubject} ${site.name}`,
         message:
-`${texts.nearbyNotificationMessage} ${site.name}.
+        `${texts.nearbyNotificationMessage} ${site.name}.
 
-${texts.readMoreHere} ${site.url || ""}
+        ${texts.readMoreHere} ${site.url || ""}
 
-${texts.unsubscribeText}
-${unsubscribeUrl}`,
-        user_id: subscription.subscriptionId,
-        site_id: site.id
-      });
+        ${texts.unsubscribeText}
+        ${unsubscribeUrl}`,
+                user_id: subscription.subscriptionId,
+                site_id: site.id
+              });
     }
 
     if (
@@ -824,6 +840,217 @@ app.post("/config/pricing", async (req, res) => {
   res.json({ success: true });
 });
 
+function toRadians(degrees) {
+  return degrees * (Math.PI / 180);
+}
+
+function getDistanceKm(lat1, lon1, lat2, lon2) {
+  const earthRadiusKm = 6371;
+
+  const dLat = toRadians(lat2 - lat1);
+  const dLon = toRadians(lon2 - lon1);
+
+  const a =
+    Math.sin(dLat / 2) ** 2 +
+    Math.cos(toRadians(lat1)) *
+    Math.cos(toRadians(lat2)) *
+    Math.sin(dLon / 2) ** 2;
+
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+
+  return earthRadiusKm * c;
+}
+
+function findNearbySites(userLat, userLon, sites, radiusKm = 25) {
+  return sites
+    .map(site => ({
+      ...site,
+      distanceKm: getDistanceKm(
+        userLat,
+        userLon,
+        site.latitude,
+        site.longitude
+      )
+    }))
+    .filter(site => site.distanceKm <= radiusKm)
+    .sort((a, b) => a.distanceKm - b.distanceKm);
+}
+
+app.post("/api/location", async (req, res) => {
+  try {
+    const token = req.query.token;
+
+    if (token !== process.env.OWNTRACKS_TOKEN) {
+      return res.status(401).json({ error: "Unauthorized" });
+    }
+
+    const payload = req.body;
+
+    console.log("OwnTracks payload:", payload);
+
+    if (!payload || payload._type !== "location") {
+      return res.status(200).json({
+        message: `Ignored ${payload?._type || "unknown"} message`
+      });
+    }
+
+    const lat = Number(payload.lat);
+    const lon = Number(payload.lon);
+    const trackerId = payload.tid || "unknown";
+    const email = payload.topic?.toLowerCase();
+
+    if (!lat || !lon) {
+      return res.status(400).json({
+        error: "Missing latitude or longitude"
+      });
+    }
+
+    if (!email) {
+      return res.status(400).json({
+        error: "Missing email in OwnTracks topic"
+      });
+    }
+
+    const subscriptions = await readSubscriptions();
+
+    const subscription = subscriptions.find(sub =>
+      sub.active !== false &&
+      sub.email &&
+      sub.email.toLowerCase() === email
+    );
+
+    if (!subscription) {
+      console.log(`No subscription found for ${email}`);
+
+      return res.status(404).json({
+        error: "Subscription not found",
+        email
+      });
+    }
+
+    console.log("Matched subscription:", subscription.email);
+
+    const sites = cachedSites || [];
+
+    console.log(`Cached sites loaded: ${sites.length}`);
+
+    if (sites.length === 0) {
+      return res.status(200).json({
+        message: "Location received, but no UNESCO sites are cached",
+        email,
+        trackerId
+      });
+    }
+
+    const nearbySites = findNearbySites(
+      lat,
+      lon,
+      sites,
+      500 // test-radie, sänk senare till t.ex. 25 eller 50
+    );
+
+    console.log(
+      "Nearby sites:",
+      nearbySites.map(site => ({
+        name: site.name,
+        country: site.country,
+        distanceKm: site.distanceKm.toFixed(2)
+      }))
+    );
+
+    const closestSite = nearbySites[0];
+
+    if (!closestSite) {
+      return res.status(200).json({
+        message: "Location received, no nearby UNESCO sites",
+        email,
+        trackerId,
+        lat,
+        lon
+      });
+    }
+
+    const messageLanguage = subscription.language === "en" ? "en" : "sv";
+    const texts = uiTexts[messageLanguage];
+
+    const unsubscribeUrl =
+      `${getPublicBaseUrl(req)}/api/subscriptions/cancel?subscriptionId=${subscription.subscriptionId}`;
+
+    const notificationMessage =
+      `${texts.nearbyNotificationMessage} ${closestSite.name}.
+
+      ${texts.readMoreHere} ${closestSite.url || ""}
+
+      ${texts.unsubscribeText}
+      ${unsubscribeUrl}`;
+
+    const subject = `${texts.nearbyNotificationSubject} ${closestSite.name}`;
+
+    const notificationResults = [];
+
+    if (
+      (subscription.notificationType === "sms" ||
+        subscription.notificationType === "both") &&
+      subscription.phone
+    ) {
+      const smsResult = await sendNotification({
+        channel: "sms",
+        to: subscription.phone,
+        subject,
+        message: notificationMessage,
+        user_id: subscription.subscriptionId,
+        site_id: closestSite.id
+      });
+
+      console.log("SMS notification result:", smsResult);
+      notificationResults.push({
+        channel: "sms",
+        result: smsResult
+      });
+    }
+
+    if (
+      (subscription.notificationType === "email" ||
+        subscription.notificationType === "both") &&
+      subscription.email
+    ) {
+      const emailResult = await sendNotification({
+        channel: "email",
+        to: subscription.email,
+        subject,
+        message: notificationMessage,
+        user_id: subscription.subscriptionId,
+        site_id: closestSite.id
+      });
+
+      console.log("Email notification result:", emailResult);
+      notificationResults.push({
+        channel: "email",
+        result: emailResult
+      });
+    }
+
+    return res.status(200).json({
+      message: "Location received, notification handled",
+      email,
+      trackerId,
+      site: {
+        id: closestSite.id,
+        name: closestSite.name,
+        country: closestSite.country,
+        distanceKm: Number(closestSite.distanceKm.toFixed(2))
+      },
+      notifications: notificationResults
+    });
+
+  } catch (error) {
+    console.error("OwnTracks error:", error);
+    return res.status(500).json({ error: "Server error" });
+  }
+});
+
+
 app.listen(port, () => {
   console.log(`Server running on http://localhost:${port}`);
 });
+

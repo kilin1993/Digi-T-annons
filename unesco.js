@@ -533,9 +533,14 @@ async function createSubscriptionAfterPayment(customer) {
   const data = await response.json();
 
   if (!response.ok) {
+    if (data.error === "email_already_registered") {
+      alert("Prenumerationen kunde inte skapas. Den här e-postadressen har redan en aktiv prenumeration.");
+  } else {
     alert("Betalningen gick igenom, men prenumerationen kunde inte skapas.");
-    return;
   }
+
+  return;
+}
 
   activeSubscription = data.subscription;
   localStorage.setItem("activeSubscription", JSON.stringify(activeSubscription));
