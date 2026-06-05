@@ -817,20 +817,20 @@ app.post("/api/subscriptions/notify-nearby", async (req, res) => {
         channel: "email",
         to: subscription.email,
         subject: `${texts.nearbyNotificationSubject} ${site.name}`,
-        message:
-          `${texts.nearbyNotificationMessage} ${site.name}.
+        message: 
+        `${texts.nearbyNotificationMessage} ${site.name}.
 
-          ${texts.readMoreHere} ${site.url || ""}
+        ${texts.readMoreHere} ${site.url || ""}
 
-          Min sida:
-          ${accountUrl}
+        Min sida:
+        ${accountUrl}
 
-          ${texts.unsubscribeText}
-          ${unsubscribeUrl}`,
-                  user_id: subscription.subscriptionId,
-                  site_id: site.id
-                });
-              }
+        ${texts.unsubscribeText}
+        ${unsubscribeUrl}`,
+                user_id: subscription.subscriptionId,
+                site_id: site.id
+              });
+            }
 
     subscription.sentSiteIds.push(site.id);
     await saveSubscriptions(subscriptions);

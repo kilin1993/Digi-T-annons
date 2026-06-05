@@ -174,7 +174,9 @@ function setupCancelSubscription(subscription) {
 
     try {
       const response = await fetch(
-        apiUrl(`/api/subscriptions/cancel?subscriptionId=${subscription.subscriptionId}`)
+        apiUrl(
+          `/api/subscriptions/cancel?subscriptionId=${subscription.subscriptionId}`
+        )
       );
 
       const text = await response.text();
@@ -185,9 +187,13 @@ function setupCancelSubscription(subscription) {
       }
 
       subscription.active = false;
-      localStorage.setItem("activeSubscription", JSON.stringify(subscription));
 
+      // Ta bort aktiv prenumeration från localStorage
+      localStorage.removeItem("activeSubscription");
+
+      // Uppdatera visningen
       renderSubscription(subscription);
+      updateFeatureVisibility(subscription);
 
       alert(text || "Prenumerationen är avslutad.");
     } catch (error) {
@@ -212,6 +218,25 @@ function setupAccountChatbot() {
   }
 }
 
+function updateFeatureVisibility(subscription) {
+  const isActive = subscription && subscription.active !== false;
+
+  const chatbot = document.getElementById("chatbot");
+  const locationCard = document.getElementById("locationNotifications");
+  const latestNotificationCard = document.getElementById("latestNotificationCard");
+  if (chatbot) {
+    chatbot.style.display = isActive ? "block" : "none";
+  }
+
+  if (locationCard) {
+    locationCard.style.display = isActive ? "block" : "none";
+  }
+
+  if (latestNotificationCard) {
+    latestNotificationCard.style.display = isActive ? "block" : "none";
+  }
+}
+
 async function initAccountPage() {
   const subscriptionId = getSubscriptionIdFromUrl();
 
@@ -231,12 +256,15 @@ async function initAccountPage() {
     );
 
     renderSubscription(subscription);
+    updateFeatureVisibility(subscription);
 
-    await loadNearestSiteForChatbot();
-
-    setupAccountChatbot();
     setupLogout();
     setupCancelSubscription(subscription);
+
+    if (subscription.active !== false) {
+      await loadNearestSiteForChatbot();
+      setupAccountChatbot();
+}
   } catch (error) {
     console.error("Account load error:", error);
     alert("Prenumerationen kunde inte hittas.");

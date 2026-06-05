@@ -49,7 +49,7 @@ export const uiTexts = {
 
     //SMS och mejl-utskick
     subscriptionConfirmationSubject: "Bekräftelse på prenumeration",
-    subscriptionConfirmationMessage: "Du har registrerat dig för notiser om UNESCO-världsarv.",
+    subscriptionConfirmationMessage: "Du har registrerat dig för notiser om UNESCO-världsarv. Kom igång nedan via Mina sidor.",
     unsubscribeText: "Avsluta prenumerationen här:",
     nearbyNotificationSubject: "Du är nära",
     nearbyNotificationMessage: "Hej! Du är nära världsarvet",
@@ -146,7 +146,7 @@ export const uiTexts = {
 
     //SMS och mejl-utskick
     subscriptionConfirmationSubject: "Subscription confirmation",
-    subscriptionConfirmationMessage: "You have registered for UNESCO World Heritage notifications.",
+    subscriptionConfirmationMessage: "You have registered for UNESCO World Heritage notifications. Get started below via My Account.",
     unsubscribeText: "Unsubscribe here:",
     nearbyNotificationSubject: "You are near",
     nearbyNotificationMessage: "Hello! You are near the World Heritage site",
