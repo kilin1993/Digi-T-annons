@@ -1,0 +1,116 @@
+<!doctype html>
+<html lang="sv">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Min sida</title>
+  <link rel="stylesheet" href="account.css">
+</head>
+
+<body class="account-page">
+  <main class="account-wrapper">
+
+    <header class="account-actions">
+        <button id="logoutButton" class="logout-button">
+          Logga ut
+        </button>
+      
+    </header>
+
+    <section class="account-hero">
+      <div class="account-badge">UNESCO World Heritage</div>
+      <h1>Min sida</h1>
+      <p>
+        Här kan du se din prenumeration, använda UNESCO-assistenten
+        och koppla platsnotifieringar.
+      </p>
+    </section>
+
+    <section class="account-card">
+      <h2>Din prenumeration</h2>
+
+      <p><strong>Status:</strong> <span id="status"></span></p>
+      <p><strong>E-post:</strong> <span id="email"></span></p>
+      <p><strong>Telefon:</strong> <span id="phone"></span></p>
+      <p><strong>Notifieringar:</strong> <span id="notificationType"></span></p>
+      <p><strong>Betalningsplan:</strong> <span id="plan"></span></p>
+      <p><strong>Radie:</strong> <span id="radiusKm"></span></p>
+      <p><strong>Registrerad:</strong> <span id="createdAt"></span></p>
+    </section>
+
+    <section class="account-card">
+      <h2>UNESCO-assistent</h2>
+      <p>
+        Ställ frågor om UNESCO-världsarv, prenumerationen eller platser
+        du har fått notifieringar om.
+      </p>
+
+      <div id="chatMessages" class="account-chat-messages"></div>
+
+      <form id="chatForm" class="account-chat-form">
+        <input
+          id="chatInput"
+          type="text"
+          placeholder="Ställ en fråga..."
+          autocomplete="off"
+        >
+        <button type="submit">Skicka</button>
+      </form>
+    </section>
+
+    <section class="account-card">
+      <h2>Platsnotifieringar</h2>
+
+      <p>
+        Installera OwnTracks och använd följande inställningar för att
+        aktivera platsbaserade notifieringar.
+      </p>
+
+      <div class="owntracks-box">
+        <p><strong>Mode:</strong> HTTP</p>
+        <p><strong>User ID:</strong> <span id="owntracksUserId"></span></p>
+        <p><strong>Device ID:</strong> phone</p>
+        <p><strong>URL:</strong></p>
+        <code id="owntracksUrl">
+          https://unesco-app-fyegcgbkgadsexfm.swedencentral-01.azurewebsites.net/api/location/owntracks
+        </code>
+      </div>
+
+      <p>
+        <strong>Platsdelning:</strong>
+        <span id="locationStatus">Inte ansluten ännu</span>
+      </p>
+
+      <p>
+        <strong>Senaste platsuppdatering:</strong>
+        <span id="lastLocationUpdate">Ingen platsdata mottagen ännu</span>
+      </p>
+    </section>
+
+    <section class="account-card">
+      <h2>Senaste notifiering</h2>
+
+      <p>
+        <strong>Senaste notifiering:</strong>
+        <span id="lastNotification">Ingen notifiering skickad ännu</span>
+      </p>
+    </section>
+
+    <section class="account-card">
+      <h2>Hantera prenumeration</h2>
+
+      <p>
+        Om du avslutar prenumerationen kommer inga fler SMS- eller
+        e-postnotifieringar att skickas.
+      </p>
+
+      <button id="cancelSubscription" class="danger-button">
+        Avsluta prenumeration
+      </button>
+    </section>
+
+  </main>
+
+  <script type="module" src="account.js"></script>
+</body>
+</html>
